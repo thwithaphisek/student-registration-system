@@ -597,8 +597,9 @@
 
                 console.log('Registration data:', registration);
 
-                // เก็บใน localStorage
-                registrations.push(registration);
+                // แยกรูปภาพออก ไม่เก็บใน localStorage
+                const { photo, ...registrationWithoutPhoto } = registration;
+                registrations.push(registrationWithoutPhoto);
                 localStorage.setItem('registrations', JSON.stringify(registrations));
 
                 // ส่งไปยัง Google Apps Script
