@@ -482,35 +482,47 @@
 
     <script>
         // Configuration
-        const ADMIN_PASSWORD = 'admin1234'; // เปลี่ยนรหัสผ่านตามต้องการ
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzeeqFrOd0XpBRbEqj3k6ugR9d92TdkVy2flbTp74IE6utUDvK0dIcjJIk4kzldhe-D/exec; // URL สำหรับส่งข้อมูลไป Google Sheets
-        const LINE_CHANNEL_ACCESS_TOKEN = 'HXQqb0eU8I7kHeTOUfnb9uf1Ed1HSDOtvHwp5MoiwcuCVH4a/G89q+jiFifXTjGcSUP5b9ILecOPmU4Uivhpvn5AXvWvyc1SIdaLXOIz03AY4mb8ov2MUs1F1AEPzVDd4CCbNP+azCdOBJuYZFGV8AdB04t89/1O/w1cDnyilFU='; // LINE Official Account Channel Access Token
-        const ADMIN_LINE_USER_ID = 'Uae3c50b04707eaee5f3dff2b668bfe9e'; // LINE User ID ของผู้ดูแลระบบ
+        const ADMIN_PASSWORD = 'admin1234';
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxOsy7sgIg5eDqciVIzBiaVjdM6jEIV_OaiokbXIm0uKKAd2RgIbjkJVFeNCKHcqMP1aw/exec';
+        const LINE_CHANNEL_ACCESS_TOKEN = 'HXQqb0eU8I7kHeTOUfnb9uf1Ed1HSDOtvHwp5MoiwcuCVH4a/G89q+jiFifXTjGcSUP5b9ILecOPmU4Uivhpvn5AXvWvyc1SIdaLXOIz03AY4mb8ov2MUs1F1AEPzVDd4CCbNP+azCdOBJuYZFGV8AdB04t89/1O/w1cDnyilFU=';
+        const ADMIN_LINE_USER_ID = 'Uae3c50b04707eaee5f3dff2b668bfe9e';
 
-        // Storage for registrations (ในการใช้งานจริงจะเก็บใน Google Sheets)
+        // Storage for registrations
         let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
 
         // Navigation Functions
+        function hideAllSections() {
+            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+        }
+
         function showStudentForm() {
             hideAllSections();
-            document.getElementById('studentForm').style.display = 'block';
+            const element = document.getElementById('studentForm');
+            if (element) {
+                element.style.display = 'block';
+            }
         }
 
         function showAdminLogin() {
             hideAllSections();
-            document.getElementById('adminLogin').style.display = 'block';
+            const element = document.getElementById('adminLogin');
+            if (element) {
+                element.style.display = 'block';
+            }
         }
 
         function showStatus() {
             hideAllSections();
-            document.getElementById('statusCheck').style.display = 'block';
-        }
-
-        function hideAllSections() {
-            document.getElementById('studentForm').style.display = 'none';
-            document.getElementById('adminLogin').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('statusCheck').style.display = 'none';
+            const element = document.getElementById('statusCheck');
+            if (element) {
+                element.style.display = 'block';
+            }
         }
 
         // Image Preview
@@ -564,13 +576,16 @@
             registrations.push(registration);
             localStorage.setItem('registrations', JSON.stringify(registrations));
 
-            // Send to Google Sheets (implement your webhook here)
+            // Send to Google Sheets
             sendToGoogleSheets(registration);
 
             // Send LINE notification
             sendLineNotification(registration);
 
-            showNotification('ส่งใบลงทะเบียนเรียบร้อยแล้ว! สถานะ: รออนุมัติ', 'success');
+            // แสดงข้อความยืนยัน
+            showNotification('✅ ส่งใบลงทะเบียนเรียบร้อยแล้ว! สถานะ: รออนุมัติ', 'success');
+            
+            // เคลียร์ฟอร์ม
             document.getElementById('registrationForm').reset();
             document.getElementById('imagePreview').innerHTML = '';
             document.querySelector('.file-upload-label').textContent = '📷 คลิกเพื่อเลือกรูปภาพ';
@@ -584,11 +599,14 @@
             
             if (adminId === ADMIN_PASSWORD) {
                 hideAllSections();
-                document.getElementById('adminPanel').style.display = 'block';
+                const adminPanel = document.getElementById('adminPanel');
+                if (adminPanel) {
+                    adminPanel.style.display = 'block';
+                }
                 loadRegistrations();
-                showNotification('เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
+                showNotification('✅ เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
             } else {
-                showNotification('รหัสผู้ดูแลไม่ถูกต้อง', 'error');
+                showNotification('❌ รหัสผู้ดูแลไม่ถูกต้อง', 'error');
             }
             
             document.getElementById('adminLoginForm').reset();
@@ -643,7 +661,7 @@
                 // Send notification to student
                 sendLineNotification(registration, 'approved');
                 loadRegistrations();
-                showNotification('อนุมัติการลงทะเบียนเรียบร้อย', 'success');
+                showNotification('✅ อนุมัติการลงทะเบียนเรียบร้อย', 'success');
             }
         }
 
@@ -658,7 +676,7 @@
                 // Send notification to student
                 sendLineNotification(registration, 'rejected');
                 loadRegistrations();
-                showNotification('ไม่อนุมัติการลงทะเบียนเรียบร้อย', 'success');
+                showNotification('✅ ไม่อนุมัติการลงทะเบียนเรียบร้อย', 'success');
             }
         }
 
@@ -672,14 +690,14 @@
             const statusResult = document.getElementById('statusResult');
             
             if (studentRegistrations.length === 0) {
-                statusResult.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">ไม่พบข้อมูลการลงทะเบียน</p>';
+                statusResult.innerHTML = '<div style="text-align: center; color: #666; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;">❌ ไม่พบข้อมูลการลงทะเบียนของรหัส: ' + studentId + '</div>';
                 return;
             }
 
-            let resultHTML = '<h3 style="margin-top: 20px;">📋 ประวัติการลงทะเบียน</h3>';
+            let resultHTML = '<h3 style="margin-top: 20px; color: #333;">📋 ประวัติการลงทะเบียน</h3>';
             studentRegistrations.forEach(registration => {
                 resultHTML += `
-                    <div class="registration-item">
+                    <div class="registration-item" style="margin-top: 15px;">
                         <div class="registration-details">
                             <div><strong>ชื่อ:</strong> ${registration.firstName} ${registration.lastName}</div>
                             <div><strong>เลขที่:</strong> ${registration.studentNumber}</div>
@@ -699,30 +717,41 @@
         // Utility Functions
         function refreshRegistrations() {
             loadRegistrations();
-            showNotification('รีเฟรชข้อมูลเรียบร้อย', 'success');
+            showNotification('🔄 รีเฟรชข้อมูลเรียบร้อย', 'success');
         }
 
         function logout() {
             hideAllSections();
             showStudentForm();
-            showNotification('ออกจากระบบเรียบร้อย', 'success');
+            showNotification('🚪 ออกจากระบบเรียบร้อย', 'success');
         }
 
         function showNotification(message, type) {
-            const notification = document.getElementById('notification');
+            // สร้าง notification element ถ้าไม่มี
+            let notification = document.getElementById('notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.className = 'notification';
+                document.body.appendChild(notification);
+            }
+            
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.classList.add('show');
             
+            // ซ่อนหลัง 4 วินาที
             setTimeout(() => {
                 notification.classList.remove('show');
-            }, 3000);
+            }, 4000);
         }
 
-        // External API Functions (จะต้องแทนที่ด้วย API จริง)
+        // External API Functions
         async function sendToGoogleSheets(data) {
-            // ตัวอย่างการส่งข้อมูลไป Google Sheets ผ่าน Google Apps Script Web App
             try {
+                console.log('Sending data to Google Sheets:', data);
+                console.log('URL:', GOOGLE_SHEET_URL);
+                
                 const response = await fetch(GOOGLE_SHEET_URL, {
                     method: 'POST',
                     headers: {
@@ -730,14 +759,21 @@
                     },
                     body: JSON.stringify(data)
                 });
-                console.log('Data sent to Google Sheets:', response);
+                
+                const result = await response.text();
+                console.log('Google Sheets response:', result);
+                
+                if (response.ok) {
+                    console.log('Data sent to Google Sheets successfully');
+                } else {
+                    console.error('Google Sheets error:', response.status, result);
+                }
             } catch (error) {
                 console.error('Error sending to Google Sheets:', error);
             }
         }
 
         async function sendLineMessage(userId, message, isRichMessage = false) {
-            // ส่งข้อความผ่าน LINE Official Account
             try {
                 const body = {
                     to: userId,
@@ -767,7 +803,6 @@
         }
 
         async function sendLineNotification(registration, action = 'submit') {
-            // สร้างข้อความสำหรับแต่ละ action
             let message = '';
             let flexMessage = null;
             
@@ -782,112 +817,6 @@
                              `✍️ ครูผู้ลงชื่อ: ${registration.teacherSignature}\n` +
                              `📊 สถานะ: รออนุมัติ\n` +
                              `📅 วันที่: ${new Date().toLocaleDateString('th-TH')}`;
-                    
-                    // สร้าง Flex Message สำหรับการลงทะเบียนใหม่
-                    flexMessage = [{
-                        type: 'flex',
-                        altText: 'การลงทะเบียนใหม่',
-                        contents: {
-                            type: 'bubble',
-                            header: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '🎓 การลงทะเบียนใหม่',
-                                        weight: 'bold',
-                                        color: '#ffffff',
-                                        size: 'lg'
-                                    }
-                                ],
-                                backgroundColor: '#4CAF50',
-                                paddingAll: 'lg'
-                            },
-                            body: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '👤 ชื่อ:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: `${registration.firstName} ${registration.lastName}`, size: 'sm', flex: 3, wrap: true }
-                                        ],
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '🆔 รหัส:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: registration.studentId, size: 'sm', flex: 3 }
-                                        ],
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '📝 เลขที่:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: registration.studentNumber, size: 'sm', flex: 3 }
-                                        ],
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '🏫 ห้อง:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: registration.classroom, size: 'sm', flex: 3 }
-                                        ],
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '⭐ คะแนน:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: `${registration.points} คะแนน`, size: 'sm', flex: 3, weight: 'bold', color: '#FF6B35' }
-                                        ],
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '✍️ ครูผู้ลงชื่อ:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: registration.teacherSignature, size: 'sm', flex: 3, wrap: true }
-                                        ],
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '📊 สถานะ:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: 'รออนุมัติ', size: 'sm', flex: 3, color: '#FFA500', weight: 'bold' }
-                                        ],
-                                        margin: 'md'
-                                    }
-                                ]
-                            },
-                            footer: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: `📅 ${new Date().toLocaleDateString('th-TH')} ${new Date().toLocaleTimeString('th-TH')}`,
-                                        size: 'xs',
-                                        color: '#666666',
-                                        align: 'center'
-                                    }
-                                ]
-                            }
-                        }
-                    }];
                     break;
                     
                 case 'approved':
@@ -898,75 +827,6 @@
                              `⭐ คะแนนที่ได้รับ: ${registration.points} คะแนน\n` +
                              `✍️ ครูผู้ลงชื่อ: ${registration.teacherSignature}\n` +
                              `🎉 ยินดีด้วย! คะแนนได้รับการอนุมัติแล้ว`;
-                    
-                    flexMessage = [{
-                        type: 'flex',
-                        altText: 'อนุมัติการลงทะเบียน',
-                        contents: {
-                            type: 'bubble',
-                            header: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '✅ อนุมัติแล้ว!',
-                                        weight: 'bold',
-                                        color: '#ffffff',
-                                        size: 'lg'
-                                    }
-                                ],
-                                backgroundColor: '#4CAF50',
-                                paddingAll: 'lg'
-                            },
-                            body: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '🎉 ยินดีด้วย!',
-                                        size: 'xl',
-                                        weight: 'bold',
-                                        color: '#4CAF50',
-                                        align: 'center',
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: 'การลงทะเบียนของคุณได้รับการอนุมัติแล้ว',
-                                        size: 'sm',
-                                        color: '#666666',
-                                        align: 'center',
-                                        wrap: true,
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'separator',
-                                        margin: 'xl'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '👤 ชื่อ:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: `${registration.firstName} ${registration.lastName}`, size: 'sm', flex: 3, wrap: true }
-                                        ],
-                                        margin: 'xl'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '⭐ คะแนน:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: `${registration.points} คะแนน`, size: 'lg', flex: 3, weight: 'bold', color: '#4CAF50' }
-                                        ],
-                                        margin: 'md'
-                                    }
-                                ]
-                            }
-                        }
-                    }];
                     break;
                     
                 case 'rejected':
@@ -975,88 +835,16 @@
                              `🆔 รหัส: ${registration.studentId}\n` +
                              `📝 เลขที่: ${registration.studentNumber}\n` +
                              `💔 เสียใจด้วย กรุณาติดต่อครูผู้ดูแลเพื่อสอบถามรายละเอียด`;
-                    
-                    flexMessage = [{
-                        type: 'flex',
-                        altText: 'ไม่อนุมัติการลงทะเบียน',
-                        contents: {
-                            type: 'bubble',
-                            header: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '❌ ไม่อนุมัติ',
-                                        weight: 'bold',
-                                        color: '#ffffff',
-                                        size: 'lg'
-                                    }
-                                ],
-                                backgroundColor: '#F44336',
-                                paddingAll: 'lg'
-                            },
-                            body: {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '💔 เสียใจด้วย',
-                                        size: 'xl',
-                                        weight: 'bold',
-                                        color: '#F44336',
-                                        align: 'center',
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: 'การลงทะเบียนของคุณไม่ได้รับการอนุมัติ',
-                                        size: 'sm',
-                                        color: '#666666',
-                                        align: 'center',
-                                        wrap: true,
-                                        margin: 'md'
-                                    },
-                                    {
-                                        type: 'separator',
-                                        margin: 'xl'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        contents: [
-                                            { type: 'text', text: '👤 ชื่อ:', size: 'sm', color: '#666666', flex: 2 },
-                                            { type: 'text', text: `${registration.firstName} ${registration.lastName}`, size: 'sm', flex: 3, wrap: true }
-                                        ],
-                                        margin: 'xl'
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: 'กรุณาติดต่อครูผู้ดูแลเพื่อสอบถามรายละเอียด',
-                                        size: 'sm',
-                                        color: '#666666',
-                                        align: 'center',
-                                        wrap: true,
-                                        margin: 'xl'
-                                    }
-                                ]
-                            }
-                        }
-                    }];
                     break;
             }
 
-            // ส่งข้อความไปยังผู้ดูแลระบบ (สำหรับ submit) หรือนักเรียน (สำหรับ approved/rejected)
+            // ส่งข้อความไปยังผู้ดูแลระบบ
             if (action === 'submit') {
-                // ส่งไปหาผู้ดูแลระบบ
                 await sendLineMessage(ADMIN_LINE_USER_ID, message);
-                await sendLineMessage(ADMIN_LINE_USER_ID, flexMessage, true);
             } else {
-                // ส่งไปหานักเรียน (ในการใช้งานจริงต้องเก็บ User ID ของนักเรียนไว้)
+                // ในการใช้งานจริงต้องเก็บ User ID ของนักเรียนไว้
                 // สำหรับตัวอย่างนี้จะส่งไปหาผู้ดูแลระบบแทน
                 await sendLineMessage(ADMIN_LINE_USER_ID, message);
-                await sendLineMessage(ADMIN_LINE_USER_ID, flexMessage, true);
             }
         }
 
