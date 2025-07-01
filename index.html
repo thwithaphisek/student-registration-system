@@ -629,7 +629,7 @@
                 console.log('📡 Sending data to Google Apps Script...');
                 console.log('URL:', GOOGLE_SHEET_URL);
                 
-                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
+                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === 'https://script.google.com/macros/s/AKfycbyrhbEJGSAlxr9ajwo5rTf7gGMKgWgeEWxKIzQDS1pxBgn_poKTrzRbebE7W1ua231WiA/exec') {
                     throw new Error('กรุณาตั้งค่า GOOGLE_SHEET_URL ให้ถูกต้อง');
                 }
                 
@@ -788,7 +788,7 @@
                 console.log('🔍 ทดสอบการเชื่อมต่อ Google Apps Script...');
                 console.log('URL:', GOOGLE_SHEET_URL);
                 
-                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('https://script.google.com/macros/s/AKfycbyrhbEJGSAlxr9ajwo5rTf7gGMKgWgeEWxKIzQDS1pxBgn_poKTrzRbebE7W1ua231WiA/exec')) {
                     console.warn('⚠️ GOOGLE_SHEET_URL ยังไม่ได้ตั้งค่า');
                     return false;
                 }
@@ -836,7 +836,7 @@
             try {
                 console.log('📊 ทดสอบการส่งข้อมูล...');
                 
-                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('https://script.google.com/macros/s/AKfycbyrhbEJGSAlxr9ajwo5rTf7gGMKgWgeEWxKIzQDS1pxBgn_poKTrzRbebE7W1ua231WiA/exec')) {
                     showNotification('⚠️ กรุณาตั้งค่า GOOGLE_SHEET_URL ก่อนทดสอบ', 'error');
                     return;
                 }
