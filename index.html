@@ -1,0 +1,496 @@
+// ======================================
+// Configuration
+// ======================================
+const ADMIN_PASSWORD = 'admin1234';
+
+// ⚠️ แทนที่ด้วย URL ที่ได้จาก Google Apps Script Deploy
+const GOOGLE_SHEET_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL'; // ใส่ URL ที่ได้จาก Deploy ที่นี่
+
+// Storage for registrations
+let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+
+// ======================================
+// Navigation Functions
+// ======================================
+function hideAllSections() {
+    const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
+    sections.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
+}
+
+function showStudentForm() {
+    hideAllSections();
+    const element = document.getElementById('studentForm');
+    if (element) {
+        element.style.display = 'block';
+    }
+}
+
+function showAdminLogin() {
+    hideAllSections();
+    const element = document.getElementById('adminLogin');
+    if (element) {
+        element.style.display = 'block';
+    }
+}
+
+function showStatus() {
+    hideAllSections();
+    const element = document.getElementById('statusCheck');
+    if (element) {
+        element.style.display = 'block';
+    }
+}
+
+// ======================================
+// Form Handling
+// ======================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Image Preview
+    const photoInput = document.getElementById('photo');
+    if (photoInput) {
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+                
+                // Update label
+                const label = document.querySelector('.file-upload-label');
+                if (label) {
+                    label.textContent = `📷 ${file.name}`;
+                }
+            }
+        });
+    }
+
+    // Student Registration Form
+    const registrationForm = document.getElementById('registrationForm');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert photo to base64
+            const photoFile = document.getElementById('photo').files[0];
+            if (photoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    data.photo = e.target.result;
+                    submitRegistration(data);
+                };
+                reader.readAsDataURL(photoFile);
+            } else {
+                submitRegistration(data);
+            }
+        });
+    }
+
+    // Admin Login Form
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    if (adminLoginForm) {
+        adminLoginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const adminId = document.getElementById('adminId').value;
+            
+            if (adminId === ADMIN_PASSWORD) {
+                hideAllSections();
+                const adminPanel = document.getElementById('adminPanel');
+                if (adminPanel) {
+                    adminPanel.style.display = 'block';
+                }
+                loadRegistrations();
+                showNotification('✅ เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
+            } else {
+                showNotification('❌ รหัสผู้ดูแลไม่ถูกต้อง', 'error');
+            }
+            
+            document.getElementById('adminLoginForm').reset();
+        });
+    }
+
+    // Status Check Form
+    const statusForm = document.getElementById('statusForm');
+    if (statusForm) {
+        statusForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentId = document.getElementById('checkStudentId').value;
+            const studentRegistrations = registrations.filter(r => r.studentId === studentId);
+            
+            const statusResult = document.getElementById('statusResult');
+            if (!statusResult) return;
+            
+            if (studentRegistrations.length === 0) {
+                statusResult.innerHTML = '<div style="text-align: center; color: #666; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;">❌ ไม่พบข้อมูลการลงทะเบียนของรหัส: ' + studentId + '</div>';
+                return;
+            }
+
+            let resultHTML = '<h3 style="margin-top: 20px; color: #333;">📋 ประวัติการลงทะเบียน</h3>';
+            studentRegistrations.forEach(registration => {
+                resultHTML += `
+                    <div class="registration-item" style="margin-top: 15px;">
+                        <div class="registration-details">
+                            <div><strong>ชื่อ:</strong> ${registration.firstName} ${registration.lastName}</div>
+                            <div><strong>เลขที่:</strong> ${registration.studentNumber}</div>
+                            <div><strong>ห้อง:</strong> ${registration.classroom}</div>
+                            <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
+                            <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
+                            <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
+                            <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            statusResult.innerHTML = resultHTML;
+        });
+    }
+    
+    // Initialize
+    showStudentForm();
+    
+    // ทดสอบการเชื่อมต่อหลังโหลดหน้า
+    setTimeout(() => {
+        testConnection();
+    }, 1000);
+});
+
+// ======================================
+// Registration Submission
+// ======================================
+async function submitRegistration(data) {
+    try {
+        console.log('🚀 กำลังส่งข้อมูลการลงทะเบียน...');
+        
+        // เพิ่มข้อมูลเพิ่มเติม
+        const registration = {
+            id: Date.now().toString(),
+            ...data,
+            status: 'pending',
+            timestamp: new Date().toISOString(),
+            statusText: 'รออนุมัติ',
+            action: 'submit'
+        };
+
+        console.log('Registration data:', registration);
+
+        // เก็บใน localStorage
+        registrations.push(registration);
+        localStorage.setItem('registrations', JSON.stringify(registrations));
+
+        // ส่งไปยัง Google Apps Script
+        const success = await sendToGoogleAppsScript(registration);
+
+        if (success) {
+            showNotification('✅ ส่งใบลงทะเบียนเรียบร้อยแล้ว! สถานะ: รออนุมัติ', 'success');
+            
+            // เคลียร์ฟอร์ม
+            document.getElementById('registrationForm').reset();
+            const preview = document.getElementById('imagePreview');
+            if (preview) preview.innerHTML = '';
+            const label = document.querySelector('.file-upload-label');
+            if (label) label.textContent = '📷 คลิกเพื่อเลือกรูปภาพ';
+        } else {
+            showNotification('⚠️ ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error in submitRegistration:', error);
+        showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+    }
+}
+
+// ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script
+async function sendToGoogleAppsScript(data) {
+    try {
+        console.log('📡 Sending data to Google Apps Script...');
+        console.log('URL:', GOOGLE_SHEET_URL);
+        
+        if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
+            throw new Error('กรุณาตั้งค่า GOOGLE_SHEET_URL ให้ถูกต้อง');
+        }
+        
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (response.ok) {
+            const result = await response.text();
+            console.log('Google Apps Script response:', result);
+            
+            try {
+                const jsonResult = JSON.parse(result);
+                if (jsonResult.status === 'success') {
+                    console.log('✅ Data sent successfully');
+                    return true;
+                } else {
+                    console.error('❌ Server error:', jsonResult.message);
+                    showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึก: ' + jsonResult.message, 'error');
+                    return false;
+                }
+            } catch (parseError) {
+                console.log('Response is not JSON, but request succeeded');
+                return true;
+            }
+        } else {
+            const errorText = await response.text();
+            console.error('❌ HTTP error:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error sending to Google Apps Script:', error);
+        showNotification('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// ======================================
+// Admin Functions
+// ======================================
+function loadRegistrations() {
+    const registrationsList = document.getElementById('registrationsList');
+    if (!registrationsList) return;
+    
+    registrationsList.innerHTML = '';
+
+    if (registrations.length === 0) {
+        registrationsList.innerHTML = '<p style="text-align: center; color: #666;">ยังไม่มีการลงทะเบียน</p>';
+        return;
+    }
+
+    registrations.forEach(registration => {
+        const registrationItem = document.createElement('div');
+        registrationItem.className = 'registration-item';
+        registrationItem.innerHTML = `
+            <h3>${registration.firstName} ${registration.lastName}</h3>
+            <div class="registration-details">
+                <div><strong>รหัส:</strong> ${registration.studentId}</div>
+                <div><strong>เลขที่:</strong> ${registration.studentNumber}</div>
+                <div><strong>ห้อง:</strong> ${registration.classroom}</div>
+                <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
+                <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
+                <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
+                <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
+                ${registration.photo ? `
+                <div class="registration-photo">
+                    <img src="${registration.photo}" alt="รูปถ่าย">
+                </div>` : ''}
+            </div>
+            ${registration.status === 'pending' ? `
+            <div class="admin-actions">
+                <button class="btn-success" onclick="approveRegistration('${registration.id}')">✅ อนุมัติ</button>
+                <button class="btn-danger" onclick="rejectRegistration('${registration.id}')">❌ ไม่อนุมัติ</button>
+            </div>` : ''}
+        `;
+        registrationsList.appendChild(registrationItem);
+    });
+}
+
+async function approveRegistration(id) {
+    const registration = registrations.find(r => r.id === id);
+    if (registration) {
+        registration.status = 'approved';
+        registration.statusText = 'อนุมัติ';
+        registration.action = 'approved';
+        localStorage.setItem('registrations', JSON.stringify(registrations));
+        
+        // ส่งการอัปเดตไปยัง Google Apps Script
+        await sendToGoogleAppsScript(registration);
+        
+        loadRegistrations();
+        showNotification('✅ อนุมัติการลงทะเบียนเรียบร้อย', 'success');
+    }
+}
+
+async function rejectRegistration(id) {
+    const registration = registrations.find(r => r.id === id);
+    if (registration) {
+        registration.status = 'rejected';
+        registration.statusText = 'ไม่อนุมัติ';
+        registration.action = 'rejected';
+        localStorage.setItem('registrations', JSON.stringify(registrations));
+        
+        // ส่งการอัปเดตไปยัง Google Apps Script
+        await sendToGoogleAppsScript(registration);
+        
+        loadRegistrations();
+        showNotification('✅ ไม่อนุมัติการลงทะเบียนเรียบร้อย', 'success');
+    }
+}
+
+// ======================================
+// Utility Functions
+// ======================================
+function refreshRegistrations() {
+    loadRegistrations();
+    showNotification('🔄 รีเฟรชข้อมูลเรียบร้อย', 'success');
+}
+
+function logout() {
+    hideAllSections();
+    showStudentForm();
+    showNotification('🚪 ออกจากระบบเรียบร้อย', 'success');
+}
+
+function showNotification(message, type) {
+    let notification = document.getElementById('notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'notification';
+        notification.className = 'notification';
+        document.body.appendChild(notification);
+    }
+    
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 4000);
+}
+
+// ======================================
+// Testing Functions
+// ======================================
+async function testConnection() {
+    try {
+        console.log('🔍 ทดสอบการเชื่อมต่อ Google Apps Script...');
+        console.log('URL:', GOOGLE_SHEET_URL);
+        
+        if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+            console.warn('⚠️ GOOGLE_SHEET_URL ยังไม่ได้ตั้งค่า');
+            return false;
+        }
+        
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'GET'
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (response.ok) {
+            const result = await response.text();
+            console.log('Response:', result);
+            
+            try {
+                const jsonResult = JSON.parse(result);
+                if (jsonResult.status === 'ok') {
+                    console.log('✅ Connection test successful');
+                    showNotification('✅ เชื่อมต่อ Google Apps Script สำเร็จ!', 'success');
+                    return true;
+                } else {
+                    console.warn('⚠️ Unexpected response:', jsonResult);
+                    showNotification('⚠️ Google Apps Script ตอบกลับผิดปกติ', 'error');
+                    return false;
+                }
+            } catch (parseError) {
+                console.log('Response is not JSON');
+                showNotification('⚠️ Google Apps Script ตอบกลับไม่ใช่ JSON', 'error');
+                return false;
+            }
+        } else {
+            console.error('❌ Connection failed:', response.status);
+            showNotification(`❌ เชื่อมต่อไม่สำเร็จ: HTTP ${response.status}`, 'error');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Connection error:', error);
+        console.warn('Connection test failed - may need to set GOOGLE_SHEET_URL');
+        return false;
+    }
+}
+
+async function sendTestData() {
+    try {
+        console.log('📊 ทดสอบการส่งข้อมูล...');
+        
+        if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+            showNotification('⚠️ กรุณาตั้งค่า GOOGLE_SHEET_URL ก่อนทดสอบ', 'error');
+            return;
+        }
+        
+        const testData = {
+            id: 'TEST_' + Date.now(),
+            studentId: 'TEST001',
+            studentNumber: '99',
+            firstName: 'ทดสอบ',
+            lastName: 'ระบบ',
+            classroom: 'ม.1/1',
+            points: '1',
+            teacherSignature: 'ครูทดสอบ',
+            photo: null,
+            action: 'submit',
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('Test data:', testData);
+        
+        const success = await sendToGoogleAppsScript(testData);
+        
+        if (success) {
+            showNotification('✅ ทดสอบส่งข้อมูลสำเร็จ! ตรวจสอบ Google Sheets', 'success');
+        } else {
+            showNotification('❌ ทดสอบส่งข้อมูลไม่สำเร็จ', 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Test error:', error);
+        showNotification('❌ เกิดข้อผิดพลาดในการทดสอบ: ' + error.message, 'error');
+    }
+}
+
+function showDebugInfo() {
+    console.log('=== DEBUG INFO ===');
+    console.log('GOOGLE_SHEET_URL:', GOOGLE_SHEET_URL);
+    console.log('Registrations count:', registrations.length);
+    console.log('Current time:', new Date().toISOString());
+    console.log('User agent:', navigator.userAgent);
+    console.log('Current location:', window.location.href);
+    
+    const urlValid = GOOGLE_SHEET_URL && !GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL');
+    
+    const info = `
+📋 ข้อมูลการ Debug:
+
+🔗 Google Apps Script URL: 
+${GOOGLE_SHEET_URL}
+
+✅ URL ถูกต้อง: ${urlValid ? 'ใช่' : 'ไม่ใช่'}
+
+📊 จำนวนการลงทะเบียนใน localStorage: ${registrations.length}
+
+🕐 เวลาปัจจุบัน: ${new Date().toLocaleString('th-TH')}
+
+🌐 เบราว์เซอร์: ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : 'อื่นๆ'}
+
+📍 URL ปัจจุบัน: ${window.location.href}
+
+${!urlValid ? '\n⚠️ กรุณาอัปเดต GOOGLE_SHEET_URL ให้ถูกต้อง' : ''}
+
+ดูข้อมูลเพิ่มเติมใน Console (กด F12)
+    `;
+    
+    alert(info);
+}
