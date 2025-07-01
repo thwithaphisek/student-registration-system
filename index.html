@@ -1,496 +1,612 @@
-// ======================================
-// Configuration
-// ======================================
-const ADMIN_PASSWORD = 'admin1234';
-
-// ⚠️ แทนที่ด้วย URL ที่ได้จาก Google Apps Script Deploy
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyWtcFFy-yiG0N0uAfCegpR8hi0maRvwXLA5EC4EhoKYRi_jiQbEFLGUQeTBbf9s7ChLg/exec'; // ใส่ URL ที่ได้จาก Deploy ที่นี่
-
-// Storage for registrations
-let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
-
-// ======================================
-// Navigation Functions
-// ======================================
-function hideAllSections() {
-    const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
-    sections.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.style.display = 'none';
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบลงทะเบียนนักเรียน</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    });
-}
 
-function showStudentForm() {
-    hideAllSections();
-    const element = document.getElementById('studentForm');
-    if (element) {
-        element.style.display = 'block';
-    }
-}
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-function showAdminLogin() {
-    hideAllSections();
-    const element = document.getElementById('adminLogin');
-    if (element) {
-        element.style.display = 'block';
-    }
-}
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
 
-function showStatus() {
-    hideAllSections();
-    const element = document.getElementById('statusCheck');
-    if (element) {
-        element.style.display = 'block';
-    }
-}
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
 
-// ======================================
-// Form Handling
-// ======================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Image Preview
-    const photoInput = document.getElementById('photo');
-    if (photoInput) {
-        photoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const preview = document.getElementById('imagePreview');
-            
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-                };
-                reader.readAsDataURL(file);
-                
-                // Update label
-                const label = document.querySelector('.file-upload-label');
-                if (label) {
-                    label.textContent = `📷 ${file.name}`;
-                }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .nav-btn.student { background: #28a745; }
+        .nav-btn.admin { background: #dc3545; }
+        .nav-btn.status { background: #17a2b8; }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .section {
+            display: none;
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-label:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .image-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+
+        .registration-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .registration-item h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .registration-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .registration-details div {
+            padding: 5px 0;
+        }
+
+        .registration-photo img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .admin-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
             }
-        });
-    }
 
-    // Student Registration Form
-    const registrationForm = document.getElementById('registrationForm');
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Convert photo to base64
-            const photoFile = document.getElementById('photo').files[0];
-            if (photoFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    data.photo = e.target.result;
-                    submitRegistration(data);
-                };
-                reader.readAsDataURL(photoFile);
-            } else {
-                submitRegistration(data);
-            }
-        });
-    }
-
-    // Admin Login Form
-    const adminLoginForm = document.getElementById('adminLoginForm');
-    if (adminLoginForm) {
-        adminLoginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const adminId = document.getElementById('adminId').value;
-            
-            if (adminId === ADMIN_PASSWORD) {
-                hideAllSections();
-                const adminPanel = document.getElementById('adminPanel');
-                if (adminPanel) {
-                    adminPanel.style.display = 'block';
-                }
-                loadRegistrations();
-                showNotification('✅ เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
-            } else {
-                showNotification('❌ รหัสผู้ดูแลไม่ถูกต้อง', 'error');
-            }
-            
-            document.getElementById('adminLoginForm').reset();
-        });
-    }
-
-    // Status Check Form
-    const statusForm = document.getElementById('statusForm');
-    if (statusForm) {
-        statusForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const studentId = document.getElementById('checkStudentId').value;
-            const studentRegistrations = registrations.filter(r => r.studentId === studentId);
-            
-            const statusResult = document.getElementById('statusResult');
-            if (!statusResult) return;
-            
-            if (studentRegistrations.length === 0) {
-                statusResult.innerHTML = '<div style="text-align: center; color: #666; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;">❌ ไม่พบข้อมูลการลงทะเบียนของรหัส: ' + studentId + '</div>';
-                return;
+            .nav-buttons {
+                flex-direction: column;
+                gap: 10px;
             }
 
-            let resultHTML = '<h3 style="margin-top: 20px; color: #333;">📋 ประวัติการลงทะเบียน</h3>';
-            studentRegistrations.forEach(registration => {
-                resultHTML += `
-                    <div class="registration-item" style="margin-top: 15px;">
-                        <div class="registration-details">
-                            <div><strong>ชื่อ:</strong> ${registration.firstName} ${registration.lastName}</div>
-                            <div><strong>เลขที่:</strong> ${registration.studentNumber}</div>
-                            <div><strong>ห้อง:</strong> ${registration.classroom}</div>
-                            <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
-                            <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
-                            <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
-                            <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
-                        </div>
+            .registration-details {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 ระบบลงทะเบียนนักเรียน</h1>
+            <p>สำหรับการลงทะเบียนเก็บคะแนน</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn student" onclick="showStudentForm()">📝 ลงทะเบียน</button>
+            <button class="nav-btn status" onclick="showStatus()">📊 ตรวจสอบสถานะ</button>
+            <button class="nav-btn admin" onclick="showAdminLogin()">👨‍💼 ผู้ดูแล</button>
+        </div>
+
+        <!-- Student Registration Form -->
+        <div id="studentForm" class="section">
+            <h2>📝 แบบฟอร์มลงทะเบียน</h2>
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label for="studentId">รหัสนักเรียน *</label>
+                    <input type="text" id="studentId" name="studentId" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentNumber">เลขที่ *</label>
+                    <input type="number" id="studentNumber" name="studentNumber" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="firstName">ชื่อ *</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">นามสกุล *</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="classroom">ห้อง *</label>
+                    <select id="classroom" name="classroom" required>
+                        <option value="">เลือกห้อง</option>
+                        <option value="ม.1/1">ม.1/1</option>
+                        <option value="ม.1/2">ม.1/2</option>
+                        <option value="ม.1/3">ม.1/3</option>
+                        <option value="ม.2/1">ม.2/1</option>
+                        <option value="ม.2/2">ม.2/2</option>
+                        <option value="ม.2/3">ม.2/3</option>
+                        <option value="ม.3/1">ม.3/1</option>
+                        <option value="ม.3/2">ม.3/2</option>
+                        <option value="ม.3/3">ม.3/3</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="points">คะแนนที่ได้รับ *</label>
+                    <select id="points" name="points" required>
+                        <option value="">เลือกคะแนน</option>
+                        <option value="1">1 คะแนน</option>
+                        <option value="2">2 คะแนน</option>
+                        <option value="3">3 คะแนน</option>
+                        <option value="4">4 คะแนน</option>
+                        <option value="5">5 คะแนน</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="teacherSignature">ครูผู้ลงชื่อ *</label>
+                    <input type="text" id="teacherSignature" name="teacherSignature" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">รูปภาพหลักฐาน</label>
+                    <div class="file-upload">
+                        <input type="file" id="photo" name="photo" accept="image/*">
+                        <label for="photo" class="file-upload-label">📷 คลิกเพื่อเลือกรูปภาพ</label>
                     </div>
-                `;
-            });
-            
-            statusResult.innerHTML = resultHTML;
-        });
-    }
-    
-    // Initialize
-    showStudentForm();
-    
-    // ทดสอบการเชื่อมต่อหลังโหลดหน้า
-    setTimeout(() => {
-        testConnection();
-    }, 1000);
-});
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
 
-// ======================================
-// Registration Submission
-// ======================================
-async function submitRegistration(data) {
-    try {
-        console.log('🚀 กำลังส่งข้อมูลการลงทะเบียน...');
-        
-        // เพิ่มข้อมูลเพิ่มเติม
-        const registration = {
-            id: Date.now().toString(),
-            ...data,
-            status: 'pending',
-            timestamp: new Date().toISOString(),
-            statusText: 'รออนุมัติ',
-            action: 'submit'
-        };
+                <button type="submit" class="btn">📤 ส่งใบลงทะเบียน</button>
+            </form>
+        </div>
 
-        console.log('Registration data:', registration);
+        <!-- Status Check -->
+        <div id="statusCheck" class="section">
+            <h2>📊 ตรวจสอบสถานะการลงทะเบียน</h2>
+            <form id="statusForm">
+                <div class="form-group">
+                    <label for="checkStudentId">รหัสนักเรียน</label>
+                    <input type="text" id="checkStudentId" name="checkStudentId" required>
+                </div>
+                <button type="submit" class="btn">🔍 ตรวจสอบ</button>
+            </form>
+            <div id="statusResult"></div>
+        </div>
 
-        // เก็บใน localStorage
-        registrations.push(registration);
-        localStorage.setItem('registrations', JSON.stringify(registrations));
+        <!-- Admin Login -->
+        <div id="adminLogin" class="section">
+            <h2>👨‍💼 เข้าสู่ระบบผู้ดูแล</h2>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminId">รหัสผู้ดูแล</label>
+                    <input type="password" id="adminId" name="adminId" required>
+                </div>
+                <button type="submit" class="btn">🔐 เข้าสู่ระบบ</button>
+            </form>
+        </div>
 
-        // ส่งไปยัง Google Apps Script
-        const success = await sendToGoogleAppsScript(registration);
-
-        if (success) {
-            showNotification('✅ ส่งใบลงทะเบียนเรียบร้อยแล้ว! สถานะ: รออนุมัติ', 'success');
-            
-            // เคลียร์ฟอร์ม
-            document.getElementById('registrationForm').reset();
-            const preview = document.getElementById('imagePreview');
-            if (preview) preview.innerHTML = '';
-            const label = document.querySelector('.file-upload-label');
-            if (label) label.textContent = '📷 คลิกเพื่อเลือกรูปภาพ';
-        } else {
-            showNotification('⚠️ ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
-        }
-        
-    } catch (error) {
-        console.error('Error in submitRegistration:', error);
-        showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
-    }
-}
-
-// ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script
-async function sendToGoogleAppsScript(data) {
-    try {
-        console.log('📡 Sending data to Google Apps Script...');
-        console.log('URL:', GOOGLE_SHEET_URL);
-        
-        if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
-            throw new Error('กรุณาตั้งค่า GOOGLE_SHEET_URL ให้ถูกต้อง');
-        }
-        
-        const response = await fetch(GOOGLE_SHEET_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (response.ok) {
-            const result = await response.text();
-            console.log('Google Apps Script response:', result);
-            
-            try {
-                const jsonResult = JSON.parse(result);
-                if (jsonResult.status === 'success') {
-                    console.log('✅ Data sent successfully');
-                    return true;
-                } else {
-                    console.error('❌ Server error:', jsonResult.message);
-                    showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึก: ' + jsonResult.message, 'error');
-                    return false;
-                }
-            } catch (parseError) {
-                console.log('Response is not JSON, but request succeeded');
-                return true;
-            }
-        } else {
-            const errorText = await response.text();
-            console.error('❌ HTTP error:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-    } catch (error) {
-        console.error('❌ Error sending to Google Apps Script:', error);
-        showNotification('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message, 'error');
-        return false;
-    }
-}
-
-// ======================================
-// Admin Functions
-// ======================================
-function loadRegistrations() {
-    const registrationsList = document.getElementById('registrationsList');
-    if (!registrationsList) return;
-    
-    registrationsList.innerHTML = '';
-
-    if (registrations.length === 0) {
-        registrationsList.innerHTML = '<p style="text-align: center; color: #666;">ยังไม่มีการลงทะเบียน</p>';
-        return;
-    }
-
-    registrations.forEach(registration => {
-        const registrationItem = document.createElement('div');
-        registrationItem.className = 'registration-item';
-        registrationItem.innerHTML = `
-            <h3>${registration.firstName} ${registration.lastName}</h3>
-            <div class="registration-details">
-                <div><strong>รหัส:</strong> ${registration.studentId}</div>
-                <div><strong>เลขที่:</strong> ${registration.studentNumber}</div>
-                <div><strong>ห้อง:</strong> ${registration.classroom}</div>
-                <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
-                <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
-                <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
-                <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
-                ${registration.photo ? `
-                <div class="registration-photo">
-                    <img src="${registration.photo}" alt="รูปถ่าย">
-                </div>` : ''}
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>👨‍💼 แผงควบคุมผู้ดูแล</h2>
+                <div>
+                    <button class="btn" onclick="refreshRegistrations()" style="width: auto; margin-right: 10px;">🔄 รีเฟรช</button>
+                    <button class="btn btn-danger" onclick="logout()" style="width: auto;">🚪 ออกจากระบบ</button>
+                </div>
             </div>
-            ${registration.status === 'pending' ? `
-            <div class="admin-actions">
-                <button class="btn-success" onclick="approveRegistration('${registration.id}')">✅ อนุมัติ</button>
-                <button class="btn-danger" onclick="rejectRegistration('${registration.id}')">❌ ไม่อนุมัติ</button>
-            </div>` : ''}
-        `;
-        registrationsList.appendChild(registrationItem);
-    });
-}
+            <div id="registrationsList"></div>
+        </div>
+    </div>
 
-async function approveRegistration(id) {
-    const registration = registrations.find(r => r.id === id);
-    if (registration) {
-        registration.status = 'approved';
-        registration.statusText = 'อนุมัติ';
-        registration.action = 'approved';
-        localStorage.setItem('registrations', JSON.stringify(registrations));
-        
-        // ส่งการอัปเดตไปยัง Google Apps Script
-        await sendToGoogleAppsScript(registration);
-        
-        loadRegistrations();
-        showNotification('✅ อนุมัติการลงทะเบียนเรียบร้อย', 'success');
-    }
-}
+    <script>
+        // ======================================
+        // Configuration
+        // ======================================
+        const ADMIN_PASSWORD = 'admin1234';
 
-async function rejectRegistration(id) {
-    const registration = registrations.find(r => r.id === id);
-    if (registration) {
-        registration.status = 'rejected';
-        registration.statusText = 'ไม่อนุมัติ';
-        registration.action = 'rejected';
-        localStorage.setItem('registrations', JSON.stringify(registrations));
-        
-        // ส่งการอัปเดตไปยัง Google Apps Script
-        await sendToGoogleAppsScript(registration);
-        
-        loadRegistrations();
-        showNotification('✅ ไม่อนุมัติการลงทะเบียนเรียบร้อย', 'success');
-    }
-}
+        // ✅ Updated with your Google Apps Script Deploy URL
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyWtcFFy-yiG0N0uAfCegpR8hi0maRvwXLA5EC4EhoKYRi_jiQbEFLGUQeTBbf9s7ChLg/exec';
 
-// ======================================
-// Utility Functions
-// ======================================
-function refreshRegistrations() {
-    loadRegistrations();
-    showNotification('🔄 รีเฟรชข้อมูลเรียบร้อย', 'success');
-}
+        // Storage for registrations
+        let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
 
-function logout() {
-    hideAllSections();
-    showStudentForm();
-    showNotification('🚪 ออกจากระบบเรียบร้อย', 'success');
-}
-
-function showNotification(message, type) {
-    let notification = document.getElementById('notification');
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.id = 'notification';
-        notification.className = 'notification';
-        document.body.appendChild(notification);
-    }
-    
-    notification.textContent = message;
-    notification.className = `notification ${type}`;
-    notification.classList.add('show');
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 4000);
-}
-
-// ======================================
-// Testing Functions
-// ======================================
-async function testConnection() {
-    try {
-        console.log('🔍 ทดสอบการเชื่อมต่อ Google Apps Script...');
-        console.log('URL:', GOOGLE_SHEET_URL);
-        
-        if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
-            console.warn('⚠️ GOOGLE_SHEET_URL ยังไม่ได้ตั้งค่า');
-            return false;
-        }
-        
-        const response = await fetch(GOOGLE_SHEET_URL, {
-            method: 'GET'
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (response.ok) {
-            const result = await response.text();
-            console.log('Response:', result);
-            
-            try {
-                const jsonResult = JSON.parse(result);
-                if (jsonResult.status === 'ok') {
-                    console.log('✅ Connection test successful');
-                    showNotification('✅ เชื่อมต่อ Google Apps Script สำเร็จ!', 'success');
-                    return true;
-                } else {
-                    console.warn('⚠️ Unexpected response:', jsonResult);
-                    showNotification('⚠️ Google Apps Script ตอบกลับผิดปกติ', 'error');
-                    return false;
+        // ======================================
+        // Navigation Functions
+        // ======================================
+        function hideAllSections() {
+            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
                 }
-            } catch (parseError) {
-                console.log('Response is not JSON');
-                showNotification('⚠️ Google Apps Script ตอบกลับไม่ใช่ JSON', 'error');
-                return false;
+            });
+        }
+
+        function showStudentForm() {
+            hideAllSections();
+            const element = document.getElementById('studentForm');
+            if (element) {
+                element.style.display = 'block';
             }
-        } else {
-            console.error('❌ Connection failed:', response.status);
-            showNotification(`❌ เชื่อมต่อไม่สำเร็จ: HTTP ${response.status}`, 'error');
-            return false;
         }
-        
-    } catch (error) {
-        console.error('❌ Connection error:', error);
-        console.warn('Connection test failed - may need to set GOOGLE_SHEET_URL');
-        return false;
-    }
-}
 
-async function sendTestData() {
-    try {
-        console.log('📊 ทดสอบการส่งข้อมูล...');
-        
-        if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
-            showNotification('⚠️ กรุณาตั้งค่า GOOGLE_SHEET_URL ก่อนทดสอบ', 'error');
-            return;
+        function showAdminLogin() {
+            hideAllSections();
+            const element = document.getElementById('adminLogin');
+            if (element) {
+                element.style.display = 'block';
+            }
         }
-        
-        const testData = {
-            id: 'TEST_' + Date.now(),
-            studentId: 'TEST001',
-            studentNumber: '99',
-            firstName: 'ทดสอบ',
-            lastName: 'ระบบ',
-            classroom: 'ม.1/1',
-            points: '1',
-            teacherSignature: 'ครูทดสอบ',
-            photo: null,
-            action: 'submit',
-            timestamp: new Date().toISOString()
-        };
-        
-        console.log('Test data:', testData);
-        
-        const success = await sendToGoogleAppsScript(testData);
-        
-        if (success) {
-            showNotification('✅ ทดสอบส่งข้อมูลสำเร็จ! ตรวจสอบ Google Sheets', 'success');
-        } else {
-            showNotification('❌ ทดสอบส่งข้อมูลไม่สำเร็จ', 'error');
+
+        function showStatus() {
+            hideAllSections();
+            const element = document.getElementById('statusCheck');
+            if (element) {
+                element.style.display = 'block';
+            }
         }
-        
-    } catch (error) {
-        console.error('❌ Test error:', error);
-        showNotification('❌ เกิดข้อผิดพลาดในการทดสอบ: ' + error.message, 'error');
-    }
-}
 
-function showDebugInfo() {
-    console.log('=== DEBUG INFO ===');
-    console.log('GOOGLE_SHEET_URL:', GOOGLE_SHEET_URL);
-    console.log('Registrations count:', registrations.length);
-    console.log('Current time:', new Date().toISOString());
-    console.log('User agent:', navigator.userAgent);
-    console.log('Current location:', window.location.href);
-    
-    const urlValid = GOOGLE_SHEET_URL && !GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL');
-    
-    const info = `
-📋 ข้อมูลการ Debug:
+        // ======================================
+        // Form Handling
+        // ======================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Image Preview
+            const photoInput = document.getElementById('photo');
+            if (photoInput) {
+                photoInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    const preview = document.getElementById('imagePreview');
+                    
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                        };
+                        reader.readAsDataURL(file);
+                        
+                        // Update label
+                        const label = document.querySelector('.file-upload-label');
+                        if (label) {
+                            label.textContent = `📷 ${file.name}`;
+                        }
+                    }
+                });
+            }
 
-🔗 Google Apps Script URL: 
-${GOOGLE_SHEET_URL}
+            // Student Registration Form
+            const registrationForm = document.getElementById('registrationForm');
+            if (registrationForm) {
+                registrationForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(e.target);
+                    const data = Object.fromEntries(formData.entries());
+                    
+                    // Convert photo to base64
+                    const photoFile = document.getElementById('photo').files[0];
+                    if (photoFile) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            data.photo = e.target.result;
+                            submitRegistration(data);
+                        };
+                        reader.readAsDataURL(photoFile);
+                    } else {
+                        submitRegistration(data);
+                    }
+                });
+            }
 
-✅ URL ถูกต้อง: ${urlValid ? 'ใช่' : 'ไม่ใช่'}
+            // Admin Login Form
+            const adminLoginForm = document.getElementById('adminLoginForm');
+            if (adminLoginForm) {
+                adminLoginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const adminId = document.getElementById('adminId').value;
+                    
+                    if (adminId === ADMIN_PASSWORD) {
+                        hideAllSections();
+                        const adminPanel = document.getElementById('adminPanel');
+                        if (adminPanel) {
+                            adminPanel.style.display = 'block';
+                        }
+                        loadRegistrations();
+                        showNotification('✅ เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
+                    } else {
+                        showNotification('❌ รหัสผู้ดูแลไม่ถูกต้อง', 'error');
+                    }
+                    
+                    document.getElementById('adminLoginForm').reset();
+                });
+            }
 
-📊 จำนวนการลงทะเบียนใน localStorage: ${registrations.length}
+            // Status Check Form
+            const statusForm = document.getElementById('statusForm');
+            if (statusForm) {
+                statusForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const studentId = document.getElementById('checkStudentId').value;
+                    const studentRegistrations = registrations.filter(r => r.studentId === studentId);
+                    
+                    const statusResult = document.getElementById('statusResult');
+                    if (!statusResult) return;
+                    
+                    if (studentRegistrations.length === 0) {
+                        statusResult.innerHTML = '<div style="text-align: center; color: #666; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;">❌ ไม่พบข้อมูลการลงทะเบียนของรหัส: ' + studentId + '</div>';
+                        return;
+                    }
 
-🕐 เวลาปัจจุบัน: ${new Date().toLocaleString('th-TH')}
+                    let resultHTML = '<h3 style="margin-top: 20px; color: #333;">📋 ประวัติการลงทะเบียน</h3>';
+                    studentRegistrations.forEach(registration => {
+                        resultHTML += `
+                            <div class="registration-item" style="margin-top: 15px;">
+                                <div class="registration-details">
+                                    <div><strong>ชื่อ:</strong> ${registration.firstName} ${registration.lastName}</div>
+                                    <div><strong>เลขที่:</strong> ${registration.studentNumber}</div>
+                                    <div><strong>ห้อง:</strong> ${registration.classroom}</div>
+                                    <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
+                                    <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
+                                    <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
+                                    <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    statusResult.innerHTML = resultHTML;
+                });
+            }
+            
+            // Initialize
+            showStudentForm();
+            
+            // ทดสอบการเชื่อมต่อหลังโหลดหน้า
+            setTimeout(() => {
+                testConnection();
+            }, 1000);
+        });
 
-🌐 เบราว์เซอร์: ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : 'อื่นๆ'}
+        // ======================================
+        // Registration Submission
+        // ======================================
+        async function submitRegistration(data) {
+            try {
+                console.log('🚀 กำลังส่งข้อมูลการลงทะเบียน...');
+                
+                // เพิ่มข้อมูลเพิ่มเติม
+                const registration = {
+                    id: Date.now().toString(),
+                    ...data,
+                    status: 'pending',
+                    timestamp: new Date().toISOString(),
+                    statusText: 'รออนุมัติ',
+                    action: 'submit'
+                };
 
-📍 URL ปัจจุบัน: ${window.location.href}
+                console.log('Registration data:', registration);
 
-${!urlValid ? '\n⚠️ กรุณาอัปเดต GOOGLE_SHEET_URL ให้ถูกต้อง' : ''}
+                // เก็บใน localStorage
+                registrations.push(registration);
+                localStorage.setItem('registrations', JSON.stringify(registrations));
 
-ดูข้อมูลเพิ่มเติมใน Console (กด F12)
-    `;
-    
-    alert(info);
-}
+                // ส่งไปยัง Google Apps Script
+                const success = await sendToGoogleAppsScript(registration);
+
+                if (success) {
+                    showNotification('✅ ส่งใบลงทะเบียนเรียบร้อยแล้ว! สถานะ: รออนุมัติ', 'success');
+                    
+                    // เคลียร์ฟอร์ม
+                    document.getElementById('registrationForm').reset();
+                    const preview = document.getElementById('imagePreview');
