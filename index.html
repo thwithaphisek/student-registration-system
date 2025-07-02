@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบลงทะเบียนนักเรียน - ดิจิทัล (Auto Sync)</title>
+    <title>ระบบลงทะเบียนนักเรียน - ดิจิทัล (Auto Sync - พร้อมใช้งาน)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -652,7 +652,7 @@
     <div class="container">
         <div class="header">
             <h1>🎓 ระบบลงทะเบียนนักเรียน</h1>
-            <p>ระบบดิจิทัลสำหรับการลงทะเบียนเก็บคะแนนแบบออนไลน์ (Auto Sync)</p>
+            <p>ระบบดิจิทัลสำหรับการลงทะเบียนเก็บคะแนนแบบออนไลน์ (Auto Sync - พร้อมใช้งาน)</p>
         </div>
 
         <!-- Auto Sync Status Bar -->
@@ -679,8 +679,8 @@
             <h2>📝 แบบฟอร์มลงทะเบียน</h2>
             
             <div class="feature-highlight">
-                <h3>✨ ระบบลงทะเบียนอัตโนมัติ</h3>
-                <p>กรอกข้อมูลและส่งใบลงทะเบียนได้ทันที ระบบจะบันทึกข้อมูลลง Google Sheets โดยอัตโนมัติ และซิงค์ข้อมูลทุกครั้งที่เปิดเว็บไซต์</p>
+                <h3>✨ ระบบลงทะเบียนอัตโนมัติ (Auto Sync)</h3>
+                <p>กรอกข้อมูลและส่งใบลงทะเบียนได้ทันที ระบบจะบันทึกข้อมูลลง Google Sheets โดยอัตโนมัติ และซิงค์ข้อมูลทุกครั้งที่เปิดเว็บไซต์ <strong>พร้อมใช้งานทันที!</strong></p>
             </div>
 
             <div class="form-card">
@@ -878,8 +878,8 @@
                 </div>
                 
                 <div class="feature-highlight">
-                    <h3>📈 ภาพรวมระบบ</h3>
-                    <p>แสดงสถิติและข้อมูลสำคัญของระบบลงทะเบียน รวมถึงสถานะการเชื่อมต่อกับ Google Sheets (Auto Sync ทุกครั้งที่เปิดเว็บไซต์)</p>
+                    <h3>📈 ภาพรวมระบบ (พร้อมใช้งาน)</h3>
+                    <p>แสดงสถิติและข้อมูลสำคัญของระบบลงทะเบียน ระบบเชื่อมต่อกับ Google Sheets พร้อมใช้งาน Auto Sync ทันที!</p>
                 </div>
             </div>
             
@@ -899,14 +899,18 @@
             <div id="adminSettings" class="admin-tab-content">
                 <div class="setup-panel">
                     <h3>🔗 การเชื่อมต่อ Google Apps Script</h3>
+                    <div style="margin-bottom: 15px; padding: 15px; background: rgba(40, 167, 69, 0.1); border-radius: 12px; border-left: 4px solid #28a745;">
+                        <strong>✅ ระบบพร้อมใช้งาน!</strong><br>
+                        <small>Google Apps Script URL ได้ถูกฝังไว้ในโค้ดแล้ว คุณสามารถใช้งานระบบได้ทันทีโดยไม่ต้องตั้งค่าเพิ่มเติม</small>
+                    </div>
                     <div class="form-group">
-                        <label for="gasUrl">URL ของ Google Apps Script:</label>
+                        <label for="gasUrl">URL ของ Google Apps Script (เปลี่ยนได้หากต้องการ):</label>
                         <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/.../exec">
                         <small style="color: #666; margin-top: 5px; display: block;">
-                            URL ต้องลงท้ายด้วย /exec และต้องเป็น URL ที่ Deploy แล้ว
+                            💡 URL เริ่มต้นถูกฝังไว้ในโค้ดแล้ว หากต้องการเปลี่ยน URL ใหม่ สามารถใส่ที่นี่ได้
                         </small>
                     </div>
-                    <button class="btn" onclick="updateGasUrl()">💾 บันทึก URL</button>
+                    <button class="btn" onclick="updateGasUrl()">💾 บันทึก URL ใหม่</button>
                     <div id="currentUrlDisplay" class="status-indicator" style="margin-top: 15px;"></div>
                 </div>
 
@@ -939,18 +943,23 @@
                 </div>
 
                 <div class="setup-panel">
-                    <h3>📋 คำแนะนำการตั้งค่า</h3>
+                    <h3>📋 ข้อมูลการตั้งค่า</h3>
                     <div class="feature-highlight">
-                        <h3>วิธีการตั้งค่า Google Apps Script</h3>
-                        <ol style="text-align: left; margin-left: 20px; color: #4a5568;">
-                            <li><strong>สร้าง Google Apps Script:</strong> ไปที่ <a href="https://script.google.com" target="_blank" style="color: #667eea;">script.google.com</a></li>
-                            <li><strong>วางโค้ด:</strong> วางโค้ด Google Apps Script ที่ให้ไว้</li>
-                            <li><strong>Deploy:</strong> กด Deploy > New Deployment</li>
-                            <li><strong>ตั้งค่าสิทธิ์:</strong> Execute as: Me และ Who has access: Anyone</li>
-                            <li><strong>คัดลอก URL:</strong> คัดลอก Web app URL มาใส่ด้านบน</li>
-                            <li><strong>ทดสอบ:</strong> กดปุ่มทดสอบเพื่อตรวจสอบ</li>
-                            <li><strong>เปิด Auto Sync:</strong> เปิดใช้งาน Auto Sync เพื่อซิงค์อัตโนมัติ</li>
-                        </ol>
+                        <h3>🎉 ระบบพร้อมใช้งานแล้ว!</h3>
+                        <div style="text-align: left; color: #4a5568;">
+                            <p><strong>✅ Google Apps Script URL:</strong> ฝังไว้ในโค้ดแล้ว</p>
+                            <p><strong>✅ Auto Sync:</strong> เปิดใช้งานโดยค่าเริ่มต้น</p>
+                            <p><strong>✅ การเชื่อมต่อ:</strong> ทำงานอัตโนมัติ</p>
+                            <br>
+                            <p><strong>🛠️ หากต้องการเปลี่ยนแปลง:</strong></p>
+                            <ol style="margin-left: 20px;">
+                                <li>สร้าง Google Apps Script ใหม่ที่ <a href="https://script.google.com" target="_blank" style="color: #667eea;">script.google.com</a></li>
+                                <li>วางโค้ด Google Apps Script (ถามผู้พัฒนาได้)</li>
+                                <li>Deploy และคัดลอก URL ใหม่</li>
+                                <li>ใส่ URL ใหม่ในช่องด้านบนและบันทึก</li>
+                                <li>ทดสอบการเชื่อมต่อ</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
                 
@@ -972,14 +981,22 @@
         // ======================================
         const ADMIN_PASSWORD = 'admin1234';
 
-        // Google Apps Script URL
-        let GOOGLE_SHEET_URL = localStorage.getItem('googleScriptUrl') || '';
+        // Google Apps Script URL - ฝังไว้ในโค้ดโดยตรง
+        const DEFAULT_GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbw4f-IH9Wo8DgFPGOJ0ptU_ctv0BoqWKu3tCDhnjwke00jOv9ye65hRjPV5j8sf26BB/exec';
+        
+        // ใช้ URL ที่ฝังไว้เป็นค่าเริ่มต้น แต่ยังสามารถเปลี่ยนแปลงได้ในหน้าผู้ดูแล
+        let GOOGLE_SHEET_URL = localStorage.getItem('googleScriptUrl') || DEFAULT_GOOGLE_SHEET_URL;
 
-        // Auto Sync Settings
+        // Auto Sync Settings - เปิดใช้งานโดยค่าเริ่มต้น
         let AUTO_SYNC_ENABLED = localStorage.getItem('autoSyncEnabled') !== 'false';
 
         // Local data storage
         let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+
+        // บันทึก URL เริ่มต้นลง localStorage หากยังไม่มี
+        if (!localStorage.getItem('googleScriptUrl')) {
+            localStorage.setItem('googleScriptUrl', DEFAULT_GOOGLE_SHEET_URL);
+        }
 
         // ======================================
         // Auto Sync Functions
@@ -996,7 +1013,7 @@
 
             if (!GOOGLE_SHEET_URL) {
                 autoSyncBar.className = 'auto-sync-bar error';
-                autoSyncStatus.textContent = '❌ ยังไม่ได้ตั้งค่า Google Apps Script URL - ให้ผู้ดูแลตั้งค่าในหน้าผู้ดูแลระบบ';
+                autoSyncStatus.textContent = '❌ เกิดข้อผิดพลาดในการโหลด Google Apps Script URL';
                 return;
             }
 
@@ -1017,7 +1034,7 @@
                     }, 3000);
                 } else {
                     autoSyncBar.className = 'auto-sync-bar error';
-                    autoSyncStatus.textContent = '⚠️ Auto Sync ไม่สำเร็จ - ใช้ข้อมูล backup หรือตรวจสอบการตั้งค่า';
+                    autoSyncStatus.textContent = '⚠️ Auto Sync ไม่สำเร็จ - ใช้ข้อมูล backup หรือตรวจสอบการเชื่อมต่อ';
                 }
             } catch (error) {
                 console.error('Auto sync error:', error);
@@ -1272,17 +1289,24 @@
                 }
                 
                 if (GOOGLE_SHEET_URL) {
-                    display.innerHTML = `<strong>URL ปัจจุบัน:</strong><br><small>${GOOGLE_SHEET_URL}</small><br><small style="color: #28a745;">✅ Auto Sync พร้อมใช้งาน</small>`;
+                    const isDefault = GOOGLE_SHEET_URL === DEFAULT_GOOGLE_SHEET_URL;
+                    display.innerHTML = `
+                        <strong>URL ปัจจุบัน:</strong><br>
+                        <small>${GOOGLE_SHEET_URL}</small><br>
+                        <small style="color: #28a745;">✅ ระบบพร้อมใช้งาน Auto Sync</small>
+                        ${isDefault ? '<br><small style="color: #17a2b8;">🔧 ใช้ URL เริ่มต้นที่ฝังในโค้ด</small>' : '<br><small style="color: #6f42c1;">⚙️ ใช้ URL ที่ตั้งค่าเอง</small>'}
+                    `;
                     display.className = 'status-indicator status-connected';
                 } else {
-                    display.innerHTML = '<strong>ยังไม่ได้ตั้งค่า URL</strong><br><small style="color: #dc3545;">❌ Auto Sync ไม่พร้อมใช้งาน</small>';
+                    display.innerHTML = '<strong>ไม่มี URL (ควรไม่เกิดขึ้น)</strong><br><small style="color: #dc3545;">❌ Auto Sync ไม่พร้อมใช้งาน</small>';
                     display.className = 'status-indicator status-error';
                 }
                 
                 // อัปเดต input field
                 const input = document.getElementById('gasUrl');
-                if (input && GOOGLE_SHEET_URL) {
-                    input.value = GOOGLE_SHEET_URL;
+                if (input) {
+                    input.value = GOOGLE_SHEET_URL || '';
+                    input.placeholder = `URL เริ่มต้น: ${DEFAULT_GOOGLE_SHEET_URL}`;
                 }
 
                 // อัปเดต checkbox
@@ -1351,6 +1375,7 @@
                 lastSync: localStorage.getItem('lastSyncTime'),
                 hasGoogleScript: !!GOOGLE_SHEET_URL,
                 autoSyncEnabled: AUTO_SYNC_ENABLED,
+                urlType: GOOGLE_SHEET_URL === DEFAULT_GOOGLE_SHEET_URL ? 'Default (Embedded)' : 'Custom',
                 browserInfo: navigator.userAgent,
                 currentTime: new Date().toLocaleString('th-TH')
             };
@@ -1368,11 +1393,13 @@
 🤖 Auto Sync:
 • Auto Sync: ${info.autoSyncEnabled ? '✅ เปิดใช้งาน' : '❌ ปิดใช้งาน'}
 • Google Apps Script: ${info.hasGoogleScript ? '✅ ตั้งค่าแล้ว' : '❌ ยังไม่ตั้งค่า'}
+• URL Type: ${info.urlType}
 • ซิงค์ล่าสุด: ${info.lastSync ? new Date(info.lastSync).toLocaleString('th-TH') : 'ยังไม่เคยซิงค์'}
 
 🔧 ระบบ:
 • เวลาปัจจุบัน: ${info.currentTime}
 • URL: https://thwithaphisek.github.io/student-registration-system/
+• สถานะ: พร้อมใช้งานทันที
 
 💻 เบราว์เซอร์:
 ${info.browserInfo}
@@ -2182,7 +2209,8 @@ ${info.browserInfo}
         window.addEventListener('load', function() {
             console.log('🚀 Student Registration System (Auto Sync) loaded');
             console.log('🤖 Auto Sync:', AUTO_SYNC_ENABLED ? 'Enabled' : 'Disabled');
-            console.log('🔗 Google Apps Script URL:', GOOGLE_SHEET_URL ? 'Configured' : 'Not configured');
+            console.log('🔗 Google Apps Script URL:', GOOGLE_SHEET_URL);
+            console.log('⚙️ URL Type:', GOOGLE_SHEET_URL === DEFAULT_GOOGLE_SHEET_URL ? 'Default (Embedded)' : 'Custom');
             
             // แสดง Auto Sync Bar หากเปิดใช้งาน
             const autoSyncBar = document.getElementById('autoSyncBar');
@@ -2196,7 +2224,7 @@ ${info.browserInfo}
                 } else {
                     autoSyncBar.className = 'auto-sync-bar error';
                     autoSyncBar.style.display = 'block';
-                    document.getElementById('autoSyncStatus').textContent = '❌ ยังไม่ได้ตั้งค่า Google Apps Script URL';
+                    document.getElementById('autoSyncStatus').textContent = '❌ เกิดข้อผิดพลาดในการโหลด Google Apps Script URL';
                 }
             }
         });
