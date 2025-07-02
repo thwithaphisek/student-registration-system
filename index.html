@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบลงทะเบียนนักเรียน - ดิจิทัล</title>
+    <title>ระบบลงทะเบียนนักเรียน - ดิจิทัล (Auto Sync)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -112,6 +112,31 @@
             font-weight: 400;
             position: relative;
             z-index: 1;
+        }
+
+        /* Auto Sync Status Bar */
+        .auto-sync-bar {
+            background: rgba(248, 250, 252, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            text-align: center;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .auto-sync-bar.syncing {
+            background: rgba(255, 243, 205, 0.9);
+            border-bottom-color: #ffeaa7;
+        }
+
+        .auto-sync-bar.success {
+            background: rgba(212, 237, 218, 0.9);
+            border-bottom-color: #c3e6cb;
+        }
+
+        .auto-sync-bar.error {
+            background: rgba(248, 215, 218, 0.9);
+            border-bottom-color: #f5c6cb;
         }
 
         .nav-container {
@@ -627,7 +652,12 @@
     <div class="container">
         <div class="header">
             <h1>🎓 ระบบลงทะเบียนนักเรียน</h1>
-            <p>ระบบดิจิทัลสำหรับการลงทะเบียนเก็บคะแนนแบบออนไลน์</p>
+            <p>ระบบดิจิทัลสำหรับการลงทะเบียนเก็บคะแนนแบบออนไลน์ (Auto Sync)</p>
+        </div>
+
+        <!-- Auto Sync Status Bar -->
+        <div id="autoSyncBar" class="auto-sync-bar">
+            <span id="autoSyncStatus">🔄 กำลังตรวจสอบการเชื่อมต่อ Google Apps Script...</span>
         </div>
 
         <div class="nav-container">
@@ -650,7 +680,7 @@
             
             <div class="feature-highlight">
                 <h3>✨ ระบบลงทะเบียนอัตโนมัติ</h3>
-                <p>กรอกข้อมูลและส่งใบลงทะเบียนได้ทันที ระบบจะบันทึกข้อมูลลง Google Sheets โดยอัตโนมัติ</p>
+                <p>กรอกข้อมูลและส่งใบลงทะเบียนได้ทันที ระบบจะบันทึกข้อมูลลง Google Sheets โดยอัตโนมัติ และซิงค์ข้อมูลทุกครั้งที่เปิดเว็บไซต์</p>
             </div>
 
             <div class="form-card">
@@ -674,7 +704,6 @@
                         <label for="lastName">นามสกุล *</label>
                         <input type="text" id="lastName" name="lastName" required placeholder="เช่น ใจดี">
                     </div>
-
 
                     <div class="form-group">
                         <label for="classroom">ห้อง *</label>
@@ -813,6 +842,8 @@
                 </form>
             </div>
         </div>
+
+        <!-- Admin Panel -->
         <div id="adminPanel" class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                 <h2>👨‍💼 แผงควบคุมผู้ดูแลระบบ</h2>
@@ -848,7 +879,7 @@
                 
                 <div class="feature-highlight">
                     <h3>📈 ภาพรวมระบบ</h3>
-                    <p>แสดงสถิติและข้อมูลสำคัญของระบบลงทะเบียน รวมถึงสถานะการเชื่อมต่อกับ Google Sheets</p>
+                    <p>แสดงสถิติและข้อมูลสำคัญของระบบลงทะเบียน รวมถึงสถานะการเชื่อมต่อกับ Google Sheets (Auto Sync ทุกครั้งที่เปิดเว็บไซต์)</p>
                 </div>
             </div>
             
@@ -880,6 +911,20 @@
                 </div>
 
                 <div class="setup-panel">
+                    <h3>🤖 Auto Sync Settings</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="autoSyncEnabled" style="margin-right: 10px;" checked>
+                            เปิดใช้งาน Auto Sync เมื่อโหลดเว็บไซต์
+                        </label>
+                        <small style="color: #666; margin-top: 5px; display: block;">
+                            เมื่อเปิดใช้งาน ระบบจะซิงค์ข้อมูลจาก Google Sheets อัตโนมัติทุกครั้งที่มีผู้เปิดเว็บไซต์
+                        </small>
+                    </div>
+                    <button class="btn btn-info" onclick="toggleAutoSync()">⚙️ อัปเดตการตั้งค่า Auto Sync</button>
+                </div>
+
+                <div class="setup-panel">
                     <h3>🧪 ทดสอบระบบ</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                         <button class="btn btn-warning" onclick="testConnection()">🔍 ทดสอบการเชื่อมต่อ</button>
@@ -904,6 +949,7 @@
                             <li><strong>ตั้งค่าสิทธิ์:</strong> Execute as: Me และ Who has access: Anyone</li>
                             <li><strong>คัดลอก URL:</strong> คัดลอก Web app URL มาใส่ด้านบน</li>
                             <li><strong>ทดสอบ:</strong> กดปุ่มทดสอบเพื่อตรวจสอบ</li>
+                            <li><strong>เปิด Auto Sync:</strong> เปิดใช้งาน Auto Sync เพื่อซิงค์อัตโนมัติ</li>
                         </ol>
                     </div>
                 </div>
@@ -929,11 +975,142 @@
         // Google Apps Script URL
         let GOOGLE_SHEET_URL = localStorage.getItem('googleScriptUrl') || '';
 
+        // Auto Sync Settings
+        let AUTO_SYNC_ENABLED = localStorage.getItem('autoSyncEnabled') !== 'false';
+
         // Local data storage
         let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
 
         // ======================================
-        // Data Synchronization Functions
+        // Auto Sync Functions
+        // ======================================
+        async function initializeAutoSync() {
+            const autoSyncBar = document.getElementById('autoSyncBar');
+            const autoSyncStatus = document.getElementById('autoSyncStatus');
+            
+            if (!AUTO_SYNC_ENABLED) {
+                autoSyncBar.className = 'auto-sync-bar';
+                autoSyncStatus.textContent = '⚠️ Auto Sync ปิดใช้งาน - สามารถเปิดได้ในหน้าตั้งค่า';
+                return;
+            }
+
+            if (!GOOGLE_SHEET_URL) {
+                autoSyncBar.className = 'auto-sync-bar error';
+                autoSyncStatus.textContent = '❌ ยังไม่ได้ตั้งค่า Google Apps Script URL - ให้ผู้ดูแลตั้งค่าในหน้าผู้ดูแลระบบ';
+                return;
+            }
+
+            // เริ่มต้น Auto Sync
+            autoSyncBar.className = 'auto-sync-bar syncing';
+            autoSyncStatus.innerHTML = '🔄 กำลัง Auto Sync ข้อมูลจาก Google Sheets... <span class="loading"></span>';
+
+            try {
+                const success = await performAutoSync();
+                
+                if (success) {
+                    autoSyncBar.className = 'auto-sync-bar success';
+                    autoSyncStatus.textContent = `✅ Auto Sync สำเร็จ! พบข้อมูล ${registrations.length} รายการ (${new Date().toLocaleTimeString('th-TH')})`;
+                    
+                    // ซ่อน auto sync bar หลัง 3 วินาที
+                    setTimeout(() => {
+                        autoSyncBar.style.display = 'none';
+                    }, 3000);
+                } else {
+                    autoSyncBar.className = 'auto-sync-bar error';
+                    autoSyncStatus.textContent = '⚠️ Auto Sync ไม่สำเร็จ - ใช้ข้อมูล backup หรือตรวจสอบการตั้งค่า';
+                }
+            } catch (error) {
+                console.error('Auto sync error:', error);
+                autoSyncBar.className = 'auto-sync-bar error';
+                autoSyncStatus.textContent = '❌ Auto Sync เกิดข้อผิดพลาด - ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
+            }
+        }
+
+        async function performAutoSync() {
+            try {
+                console.log('🤖 Auto Sync: Starting...');
+
+                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getAll&timestamp=${Date.now()}`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const text = await response.text();
+                    console.log('🤖 Auto Sync: Response received');
+                    
+                    try {
+                        const result = JSON.parse(text);
+                        
+                        if (result.status === 'success' && Array.isArray(result.data)) {
+                            registrations = result.data;
+                            
+                            // บันทึกข้อมูลลง localStorage เป็น backup
+                            localStorage.setItem('registrations', JSON.stringify(registrations));
+                            localStorage.setItem('lastSyncTime', new Date().toISOString());
+                            
+                            console.log(`🤖 Auto Sync: Success - ${registrations.length} records`);
+                            return true;
+                        } else {
+                            throw new Error(result.message || 'Invalid data received');
+                        }
+                    } catch (parseError) {
+                        console.warn('🤖 Auto Sync: Response is not JSON:', parseError);
+                        return false;
+                    }
+                } else {
+                    console.error(`🤖 Auto Sync: HTTP ${response.status}: ${response.statusText}`);
+                    return false;
+                }
+
+            } catch (error) {
+                console.error('🤖 Auto Sync error:', error);
+                
+                // ใช้ข้อมูล backup จาก localStorage
+                const backupData = localStorage.getItem('registrations');
+                if (backupData) {
+                    try {
+                        registrations = JSON.parse(backupData);
+                        console.log(`🤖 Auto Sync: Using backup data - ${registrations.length} records`);
+                        return false; // ส่งคืน false เพราะไม่ใช่ sync จากเซิร์ฟเวอร์
+                    } catch (backupError) {
+                        registrations = [];
+                        return false;
+                    }
+                }
+                
+                return false;
+            }
+        }
+
+        function toggleAutoSync() {
+            const checkbox = document.getElementById('autoSyncEnabled');
+            AUTO_SYNC_ENABLED = checkbox.checked;
+            localStorage.setItem('autoSyncEnabled', AUTO_SYNC_ENABLED.toString());
+            
+            if (AUTO_SYNC_ENABLED) {
+                showNotification('✅ เปิดใช้งาน Auto Sync แล้ว - จะซิงค์อัตโนมัติเมื่อโหลดเว็บไซต์', 'success');
+            } else {
+                showNotification('⚠️ ปิดใช้งาน Auto Sync แล้ว - ต้องซิงค์ด้วยตนเอง', 'warning');
+            }
+
+            // อัปเดต auto sync bar
+            const autoSyncBar = document.getElementById('autoSyncBar');
+            const autoSyncStatus = document.getElementById('autoSyncStatus');
+            
+            if (AUTO_SYNC_ENABLED && GOOGLE_SHEET_URL) {
+                autoSyncBar.style.display = 'block';
+                initializeAutoSync();
+            } else {
+                autoSyncBar.className = 'auto-sync-bar';
+                autoSyncStatus.textContent = AUTO_SYNC_ENABLED ? 
+                    '⚠️ Auto Sync เปิดใช้งาน แต่ยังไม่ได้ตั้งค่า Google Apps Script URL' : 
+                    '⚠️ Auto Sync ปิดใช้งาน';
+            }
+        }
+
+        // ======================================
+        // Data Synchronization Functions (เดิม)
         // ======================================
         async function syncDataFromServer() {
             if (!GOOGLE_SHEET_URL) {
@@ -952,7 +1129,7 @@
             });
 
             try {
-                console.log('🔄 Syncing data from Google Sheets...');
+                console.log('🔄 Manual Sync: Starting...');
 
                 const response = await fetch(`${GOOGLE_SHEET_URL}?action=getAll&timestamp=${Date.now()}`, {
                     method: 'GET',
@@ -961,7 +1138,7 @@
 
                 if (response.ok) {
                     const text = await response.text();
-                    console.log('📄 Raw response:', text);
+                    console.log('📄 Manual Sync: Response received');
                     
                     try {
                         const result = JSON.parse(text);
@@ -1002,7 +1179,7 @@
                 }
 
             } catch (error) {
-                console.error('❌ Sync error:', error);
+                console.error('❌ Manual Sync error:', error);
                 
                 // ใช้ข้อมูล backup จาก localStorage
                 const backupData = localStorage.getItem('registrations');
@@ -1054,7 +1231,7 @@
         }
 
         // ======================================
-        // Setup Functions (ย้ายมาจากหน้าตั้งค่าเดิม)
+        // Setup Functions
         // ======================================
         function updateGasUrl() {
             const newUrl = document.getElementById('gasUrl').value.trim();
@@ -1072,7 +1249,18 @@
             GOOGLE_SHEET_URL = newUrl;
             localStorage.setItem('googleScriptUrl', newUrl);
             updateCurrentUrlDisplay();
-            showNotification('✅ บันทึก URL เรียบร้อย', 'success');
+            showNotification('✅ บันทึก URL เรียบร้อย - Auto Sync พร้อมใช้งาน!', 'success');
+
+            // อัปเดต auto sync bar
+            if (AUTO_SYNC_ENABLED) {
+                const autoSyncBar = document.getElementById('autoSyncBar');
+                if (autoSyncBar) {
+                    autoSyncBar.style.display = 'block';
+                    setTimeout(() => {
+                        initializeAutoSync();
+                    }, 500);
+                }
+            }
         }
 
         function updateCurrentUrlDisplay() {
@@ -1084,10 +1272,10 @@
                 }
                 
                 if (GOOGLE_SHEET_URL) {
-                    display.innerHTML = `<strong>URL ปัจจุบัน:</strong><br><small>${GOOGLE_SHEET_URL}</small>`;
+                    display.innerHTML = `<strong>URL ปัจจุบัน:</strong><br><small>${GOOGLE_SHEET_URL}</small><br><small style="color: #28a745;">✅ Auto Sync พร้อมใช้งาน</small>`;
                     display.className = 'status-indicator status-connected';
                 } else {
-                    display.innerHTML = '<strong>ยังไม่ได้ตั้งค่า URL</strong>';
+                    display.innerHTML = '<strong>ยังไม่ได้ตั้งค่า URL</strong><br><small style="color: #dc3545;">❌ Auto Sync ไม่พร้อมใช้งาน</small>';
                     display.className = 'status-indicator status-error';
                 }
                 
@@ -1095,6 +1283,12 @@
                 const input = document.getElementById('gasUrl');
                 if (input && GOOGLE_SHEET_URL) {
                     input.value = GOOGLE_SHEET_URL;
+                }
+
+                // อัปเดต checkbox
+                const checkbox = document.getElementById('autoSyncEnabled');
+                if (checkbox) {
+                    checkbox.checked = AUTO_SYNC_ENABLED;
                 }
             } catch (error) {
                 console.error('Error in updateCurrentUrlDisplay:', error);
@@ -1156,12 +1350,13 @@
                 totalPoints: registrations.filter(r => r.status === 'approved').reduce((sum, r) => sum + (parseInt(r.points) || 0), 0),
                 lastSync: localStorage.getItem('lastSyncTime'),
                 hasGoogleScript: !!GOOGLE_SHEET_URL,
+                autoSyncEnabled: AUTO_SYNC_ENABLED,
                 browserInfo: navigator.userAgent,
                 currentTime: new Date().toLocaleString('th-TH')
             };
 
             const infoText = `
-📊 ข้อมูลระบบลงทะเบียนนักเรียน
+📊 ข้อมูลระบบลงทะเบียนนักเรียน (Auto Sync Version)
 
 📈 สถิติ:
 • รายการทั้งหมด: ${info.totalRegistrations}
@@ -1170,10 +1365,14 @@
 • ไม่อนุมัติ: ${info.rejectedCount}
 • คะแนนรวม: ${info.totalPoints}
 
-🔧 ระบบ:
+🤖 Auto Sync:
+• Auto Sync: ${info.autoSyncEnabled ? '✅ เปิดใช้งาน' : '❌ ปิดใช้งาน'}
 • Google Apps Script: ${info.hasGoogleScript ? '✅ ตั้งค่าแล้ว' : '❌ ยังไม่ตั้งค่า'}
 • ซิงค์ล่าสุด: ${info.lastSync ? new Date(info.lastSync).toLocaleString('th-TH') : 'ยังไม่เคยซิงค์'}
+
+🔧 ระบบ:
 • เวลาปัจจุบัน: ${info.currentTime}
+• URL: https://thwithaphisek.github.io/student-registration-system/
 
 💻 เบราว์เซอร์:
 ${info.browserInfo}
@@ -1183,7 +1382,7 @@ ${info.browserInfo}
         }
 
         function clearLocalData() {
-            if (confirm('⚠️ ต้องการล้างข้อมูล backup ใน Local Storage หรือไม่?\n\n⚠️ ข้อมูลหลักจะยังอยู่ใน Google Sheets')) {
+            if (confirm('⚠️ ต้องการล้างข้อมูล backup ใน Local Storage หรือไม่?\n\n⚠️ ข้อมูลหลักจะยังอยู่ใน Google Sheets\n⚠️ การตั้งค่า Auto Sync จะไม่ถูกลบ')) {
                 localStorage.removeItem('registrations');
                 localStorage.removeItem('lastSyncTime');
                 registrations = [];
@@ -1195,7 +1394,7 @@ ${info.browserInfo}
                 loadRegistrations();
                 
                 // ลองซิงค์ข้อมูลใหม่จาก Google Sheets
-                if (GOOGLE_SHEET_URL) {
+                if (GOOGLE_SHEET_URL && AUTO_SYNC_ENABLED) {
                     setTimeout(() => {
                         syncDataFromServer();
                     }, 1000);
@@ -1229,10 +1428,10 @@ ${info.browserInfo}
         function showStatus() {
             hideAllSections();
             document.getElementById('statusCheck').style.display = 'block';
-            // ซิงค์ข้อมูลอัตโนมัติเมื่อเปิดหน้า
-            if (GOOGLE_SHEET_URL) {
+            // ซิงค์ข้อมูลอัตโนมัติเมื่อเปิดหน้า (ถ้าไม่ใช่ auto sync)
+            if (GOOGLE_SHEET_URL && !AUTO_SYNC_ENABLED) {
                 syncDataFromServer();
-            } else {
+            } else if (!GOOGLE_SHEET_URL) {
                 const statusElement = document.getElementById('syncStatusDisplay');
                 if (statusElement) {
                     statusElement.innerHTML = '<div class="status-indicator status-error">⚠️ กรุณาให้ผู้ดูแลตั้งค่า Google Apps Script URL ก่อน</div>';
@@ -1241,7 +1440,7 @@ ${info.browserInfo}
         }
 
         // ======================================
-        // Admin Tab Functions (แก้ไข Error Handling)
+        // Admin Tab Functions 
         // ======================================
         function showAdminTab(tabName) {
             try {
@@ -1270,7 +1469,7 @@ ${info.browserInfo}
                     selectedTab.classList.add('active');
                 }
 
-                // เพิ่ม active class ให้ปุ่มที่ถูกเลือก - ใช้วิธีที่ปลอดภัยกว่า
+                // เพิ่ม active class ให้ปุ่มที่ถูกเลือก
                 const tabButtons2 = document.querySelectorAll('.admin-tab');
                 if (tabButtons2) {
                     tabButtons2.forEach((button, index) => {
@@ -1334,47 +1533,6 @@ ${info.browserInfo}
         }
 
         // ======================================
-        // Setup Functions
-        // ======================================
-        function updateGasUrl() {
-            const newUrl = document.getElementById('gasUrl').value.trim();
-            
-            if (!newUrl) {
-                showNotification('❌ กรุณาใส่ URL', 'error');
-                return;
-            }
-
-            if (!newUrl.includes('script.google.com') || !newUrl.endsWith('/exec')) {
-                showNotification('❌ URL ไม่ถูกต้อง ต้องเป็น Google Apps Script URL และลงท้ายด้วย /exec', 'error');
-                return;
-            }
-
-            GOOGLE_SHEET_URL = newUrl;
-            localStorage.setItem('googleScriptUrl', newUrl);
-            updateCurrentUrlDisplay();
-            showNotification('✅ บันทึก URL เรียบร้อย', 'success');
-        }
-
-        function updateCurrentUrlDisplay() {
-            const display = document.getElementById('currentUrlDisplay');
-            if (display) {
-                if (GOOGLE_SHEET_URL) {
-                    display.innerHTML = `<strong>URL ปัจจุบัน:</strong><br><small>${GOOGLE_SHEET_URL}</small>`;
-                    display.className = 'status-indicator status-connected';
-                } else {
-                    display.innerHTML = '<strong>ยังไม่ได้ตั้งค่า URL</strong>';
-                    display.className = 'status-indicator status-error';
-                }
-            }
-            
-            // อัปเดต input field
-            const input = document.getElementById('gasUrl');
-            if (input && GOOGLE_SHEET_URL) {
-                input.value = GOOGLE_SHEET_URL;
-            }
-        }
-
-        // ======================================
         // Testing Functions
         // ======================================
         async function testConnection() {
@@ -1409,7 +1567,7 @@ ${info.browserInfo}
                     }
 
                     if (result && (result.status === 'ok' || result.status === 'success')) {
-                        statusDiv.innerHTML = `<div class="status-indicator status-connected">✅ เชื่อมต่อสำเร็จ<br><small>Message: ${result.message || 'N/A'}</small></div>`;
+                        statusDiv.innerHTML = `<div class="status-indicator status-connected">✅ เชื่อมต่อสำเร็จ<br><small>Message: ${result.message || 'N/A'}</small><br><small>Auto Sync: ${AUTO_SYNC_ENABLED ? '✅ พร้อมใช้งาน' : '⚠️ ปิดใช้งาน'}</small></div>`;
                         showNotification('✅ เชื่อมต่อ Google Apps Script สำเร็จ!', 'success');
                         return true;
                     } else {
@@ -1542,7 +1700,8 @@ ${info.browserInfo}
                         let statusHtml = `
                             <div class="status-indicator ${checkResult.overall.startsWith('✅') ? 'status-connected' : 'status-error'}">
                                 ${checkResult.overall}<br>
-                                <small>เวลา: ${new Date(checkResult.timestamp).toLocaleString('th-TH')}</small>
+                                <small>เวลา: ${new Date(checkResult.timestamp).toLocaleString('th-TH')}</small><br>
+                                <small>Auto Sync: ${AUTO_SYNC_ENABLED ? '✅ เปิดใช้งาน' : '⚠️ ปิดใช้งาน'}</small>
                             </div>
                         `;
                         
@@ -1657,17 +1816,22 @@ ${info.browserInfo}
                             showAdminTab('dashboard');
                         }, 100);
                         
-                        if (GOOGLE_SHEET_URL) {
+                        if (GOOGLE_SHEET_URL && !AUTO_SYNC_ENABLED) {
                             syncDataFromServer().then(() => {
                                 updateAdminStats();
                             });
-                        } else {
+                        } else if (!GOOGLE_SHEET_URL) {
                             const statusElement = document.getElementById('adminSyncStatus');
                             if (statusElement) {
                                 statusElement.innerHTML = '<div class="status-indicator status-error">⚠️ กรุณาตั้งค่า Google Apps Script URL ในแท็บ "⚙️ ตั้งค่าระบบ" ก่อน</div>';
                             }
-                            updateAdminStats();
+                        } else {
+                            const statusElement = document.getElementById('adminSyncStatus');
+                            if (statusElement) {
+                                statusElement.innerHTML = '<div class="status-indicator status-connected">🤖 Auto Sync เปิดใช้งาน - ข้อมูลซิงค์อัตโนมัติแล้ว</div>';
+                            }
                         }
+                        updateAdminStats();
                         showNotification('✅ เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
                     } else {
                         showNotification('❌ รหัสผู้ดูแลไม่ถูกต้อง', 'error');
@@ -1726,6 +1890,11 @@ ${info.browserInfo}
                     statusResult.innerHTML = resultHTML;
                 });
             }
+            
+            // Initialize Auto Sync on page load
+            setTimeout(() => {
+                initializeAutoSync();
+            }, 1000);
             
             // Initialize
             showStudentForm(); // เริ่มต้นที่หน้าลงทะเบียน
@@ -1814,7 +1983,7 @@ ${info.browserInfo}
         }
 
         // ======================================
-        // Admin Functions (แก้ไข Error Handling)
+        // Admin Functions
         // ======================================
         function updateAdminStats() {
             try {
@@ -1849,6 +2018,10 @@ ${info.browserInfo}
                     <div class="stat-card">
                         <div class="stat-number">${totalPoints}</div>
                         <div class="stat-label">คะแนนรวม</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${AUTO_SYNC_ENABLED ? '🤖' : '📱'}</div>
+                        <div class="stat-label">${AUTO_SYNC_ENABLED ? 'Auto Sync ON' : 'Manual Mode'}</div>
                     </div>
                 `;
             } catch (error) {
@@ -1923,7 +2096,9 @@ ${info.browserInfo}
                         
                         if (success) {
                             showNotification('✅ อนุมัติการลงทะเบียนเรียบร้อย', 'success');
-                            await syncDataFromServer();
+                            if (!AUTO_SYNC_ENABLED) {
+                                await syncDataFromServer();
+                            }
                         } else {
                             showNotification('⚠️ อนุมัติแล้ว แต่ไม่สามารถซิงค์กับเซิร์ฟเวอร์ได้', 'warning');
                         }
@@ -1956,7 +2131,9 @@ ${info.browserInfo}
                         
                         if (success) {
                             showNotification('✅ ไม่อนุมัติการลงทะเบียนเรียบร้อย', 'success');
-                            await syncDataFromServer();
+                            if (!AUTO_SYNC_ENABLED) {
+                                await syncDataFromServer();
+                            }
                         } else {
                             showNotification('⚠️ ไม่อนุมัติแล้ว แต่ไม่สามารถซิงค์กับเซิร์ฟเวอร์ได้', 'warning');
                         }
@@ -2000,11 +2177,67 @@ ${info.browserInfo}
         }
 
         // ======================================
-        // Initialize
+        // Initialize Application
         // ======================================
         window.addEventListener('load', function() {
-            console.log('🚀 Application loaded');
-            // ไม่ต้องเรียก updateCurrentUrlDisplay ที่นี่ เพราะจะเรียกในแท็บ settings
+            console.log('🚀 Student Registration System (Auto Sync) loaded');
+            console.log('🤖 Auto Sync:', AUTO_SYNC_ENABLED ? 'Enabled' : 'Disabled');
+            console.log('🔗 Google Apps Script URL:', GOOGLE_SHEET_URL ? 'Configured' : 'Not configured');
+            
+            // แสดง Auto Sync Bar หากเปิดใช้งาน
+            const autoSyncBar = document.getElementById('autoSyncBar');
+            if (autoSyncBar) {
+                if (AUTO_SYNC_ENABLED && GOOGLE_SHEET_URL) {
+                    autoSyncBar.style.display = 'block';
+                } else if (!AUTO_SYNC_ENABLED) {
+                    autoSyncBar.className = 'auto-sync-bar';
+                    autoSyncBar.style.display = 'block';
+                    document.getElementById('autoSyncStatus').textContent = '⚠️ Auto Sync ปิดใช้งาน - สามารถเปิดได้ในหน้าตั้งค่า';
+                } else {
+                    autoSyncBar.className = 'auto-sync-bar error';
+                    autoSyncBar.style.display = 'block';
+                    document.getElementById('autoSyncStatus').textContent = '❌ ยังไม่ได้ตั้งค่า Google Apps Script URL';
+                }
+            }
+        });
+
+        // ======================================
+        // Service Worker สำหรับ Background Sync (เสริม)
+        // ======================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('🔧 Service Worker registered successfully');
+                    })
+                    .catch(function(error) {
+                        console.log('🔧 Service Worker registration failed (Optional)');
+                    });
+            });
+        }
+
+        // ======================================
+        // Auto Sync Interval (เสริม)
+        // ======================================
+        function startPeriodicSync() {
+            if (AUTO_SYNC_ENABLED && GOOGLE_SHEET_URL) {
+                // ซิงค์ทุก 5 นาที (สำหรับการใช้งานจริง)
+                setInterval(async () => {
+                    try {
+                        console.log('🕐 Periodic Auto Sync...');
+                        await performAutoSync();
+                    } catch (error) {
+                        console.log('🕐 Periodic sync failed:', error);
+                    }
+                }, 5 * 60 * 1000); // 5 minutes
+            }
+        }
+
+        // เริ่ม Periodic Sync หลังจากโหลดเสร็จ
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                startPeriodicSync();
+            }, 30000); // รอ 30 วินาทีหลังโหลดเสร็จ
         });
     </script>
 </body>
