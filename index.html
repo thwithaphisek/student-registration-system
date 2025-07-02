@@ -644,6 +644,139 @@
             </div>
         </div>
 
+        <!-- Student Registration Form -->
+        <div id="studentForm" class="section" style="display: block;">
+            <h2>📝 แบบฟอร์มลงทะเบียน</h2>
+            
+            <div class="feature-highlight">
+                <h3>✨ ระบบลงทะเบียนอัตโนมัติ</h3>
+                <p>กรอกข้อมูลและส่งใบลงทะเบียนได้ทันที ระบบจะบันทึกข้อมูลลง Google Sheets โดยอัตโนมัติ</p>
+            </div>
+
+            <div class="form-card">
+                <form id="registrationForm">
+                    <div class="form-group">
+                        <label for="studentId">รหัสนักเรียน *</label>
+                        <input type="text" id="studentId" name="studentId" required placeholder="เช่น 12345">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="studentNumber">เลขที่ *</label>
+                        <input type="number" id="studentNumber" name="studentNumber" required placeholder="เช่น 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="firstName">ชื่อ *</label>
+                        <input type="text" id="firstName" name="firstName" required placeholder="เช่น สมชาย">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">นามสกุล *</label>
+                        <input type="text" id="lastName" name="lastName" required placeholder="เช่น ใจดี">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="classroom">ห้อง *</label>
+                        <select id="classroom" name="classroom" required>
+                            <option value="">เลือกห้อง</option>
+                            <!-- ม.1: 11 ห้อง (ม.1/1 - ม.1/11) -->
+                            <option value="ม.1/1">ม.1/1</option>
+                            <option value="ม.1/2">ม.1/2</option>
+                            <option value="ม.1/3">ม.1/3</option>
+                            <option value="ม.1/4">ม.1/4</option>
+                            <option value="ม.1/5">ม.1/5</option>
+                            <option value="ม.1/6">ม.1/6</option>
+                            <option value="ม.1/7">ม.1/7</option>
+                            <option value="ม.1/8">ม.1/8</option>
+                            <option value="ม.1/9">ม.1/9</option>
+                            <option value="ม.1/10">ม.1/10</option>
+                            <option value="ม.1/11">ม.1/11</option>
+                            <!-- ม.2: 10 ห้อง (ม.2/1 - ม.2/10) -->
+                            <option value="ม.2/1">ม.2/1</option>
+                            <option value="ม.2/2">ม.2/2</option>
+                            <option value="ม.2/3">ม.2/3</option>
+                            <option value="ม.2/4">ม.2/4</option>
+                            <option value="ม.2/5">ม.2/5</option>
+                            <option value="ม.2/6">ม.2/6</option>
+                            <option value="ม.2/7">ม.2/7</option>
+                            <option value="ม.2/8">ม.2/8</option>
+                            <option value="ม.2/9">ม.2/9</option>
+                            <option value="ม.2/10">ม.2/10</option>
+                            <!-- ม.3: 10 ห้อง (ม.3/1 - ม.3/10) -->
+                            <option value="ม.3/1">ม.3/1</option>
+                            <option value="ม.3/2">ม.3/2</option>
+                            <option value="ม.3/3">ม.3/3</option>
+                            <option value="ม.3/4">ม.3/4</option>
+                            <option value="ม.3/5">ม.3/5</option>
+                            <option value="ม.3/6">ม.3/6</option>
+                            <option value="ม.3/7">ม.3/7</option>
+                            <option value="ม.3/8">ม.3/8</option>
+                            <option value="ม.3/9">ม.3/9</option>
+                            <option value="ม.3/10">ม.3/10</option>
+                            <!-- ม.4: 12 ห้อง (ม.4/1 - ม.4/12) -->
+                            <option value="ม.4/1">ม.4/1</option>
+                            <option value="ม.4/2">ม.4/2</option>
+                            <option value="ม.4/3">ม.4/3</option>
+                            <option value="ม.4/4">ม.4/4</option>
+                            <option value="ม.4/5">ม.4/5</option>
+                            <option value="ม.4/6">ม.4/6</option>
+                            <option value="ม.4/7">ม.4/7</option>
+                            <option value="ม.4/8">ม.4/8</option>
+                            <option value="ม.4/9">ม.4/9</option>
+                            <option value="ม.4/10">ม.4/10</option>
+                            <option value="ม.4/11">ม.4/11</option>
+                            <option value="ม.4/12">ม.4/12</option>
+                            <!-- ม.5: 10 ห้อง (ม.5/1 - ม.5/10) -->
+                            <option value="ม.5/1">ม.5/1</option>
+                            <option value="ม.5/2">ม.5/2</option>
+                            <option value="ม.5/3">ม.5/3</option>
+                            <option value="ม.5/4">ม.5/4</option>
+                            <option value="ม.5/5">ม.5/5</option>
+                            <option value="ม.5/6">ม.5/6</option>
+                            <option value="ม.5/7">ม.5/7</option>
+                            <option value="ม.5/8">ม.5/8</option>
+                            <option value="ม.5/9">ม.5/9</option>
+                            <option value="ม.5/10">ม.5/10</option>
+                            <!-- ม.6: 12 ห้อง (ม.6/1 - ม.6/12) -->
+                            <option value="ม.6/1">ม.6/1</option>
+                            <option value="ม.6/2">ม.6/2</option>
+                            <option value="ม.6/3">ม.6/3</option>
+                            <option value="ม.6/4">ม.6/4</option>
+                            <option value="ม.6/5">ม.6/5</option>
+                            <option value="ม.6/6">ม.6/6</option>
+                            <option value="ม.6/7">ม.6/7</option>
+                            <option value="ม.6/8">ม.6/8</option>
+                            <option value="ม.6/9">ม.6/9</option>
+                            <option value="ม.6/10">ม.6/10</option>
+                            <option value="ม.6/11">ม.6/11</option>
+                            <option value="ม.6/12">ม.6/12</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="points">คะแนนที่ได้รับ *</label>
+                        <select id="points" name="points" required>
+                            <option value="">เลือกคะแนน</option>
+                            <option value="1">1 คะแนน</option>
+                            <option value="2">2 คะแนน</option>
+                            <option value="3">3 คะแนน</option>
+                            <option value="4">4 คะแนน</option>
+                            <option value="5">5 คะแนน</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="teacherSignature">ลงชื่อ ครู/บุคลากร ผู้แจ้ง *</label>
+                        <input type="text" id="teacherSignature" name="teacherSignature" required placeholder="เช่น อาจารย์สมศรี">
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">📤 ส่งใบลงทะเบียน</button>
+                    <div id="submitStatus"></div>
+                </form>
+            </div>
+        </div>
+
         <!-- Status Check -->
         <div id="statusCheck" class="section">
             <h2>📊 ตรวจสอบสถานะการลงทะเบียน</h2>
@@ -657,7 +790,7 @@
                 <form id="statusForm">
                     <div class="form-group">
                         <label for="checkStudentId">รหัสนักเรียน</label>
-                        <input type="text" id="checkStudentId" name="checkStudentId" required>
+                        <input type="text" id="checkStudentId" name="checkStudentId" required placeholder="เช่น 12345">
                     </div>
                     <button type="submit" class="btn">🔍 ตรวจสอบ</button>
                 </form>
@@ -674,14 +807,12 @@
                 <form id="adminLoginForm">
                     <div class="form-group">
                         <label for="adminId">รหัสผู้ดูแล</label>
-                        <input type="password" id="adminId" name="adminId" required>
+                        <input type="password" id="adminId" name="adminId" required placeholder="รหัสผู้ดูแล">
                     </div>
                     <button type="submit" class="btn">🔐 เข้าสู่ระบบ</button>
                 </form>
             </div>
         </div>
-
-        <!-- Admin Panel -->
         <div id="adminPanel" class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                 <h2>👨‍💼 แผงควบคุมผู้ดูแลระบบ</h2>
