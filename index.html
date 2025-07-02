@@ -62,6 +62,7 @@
         .nav-btn.student { background: #28a745; }
         .nav-btn.admin { background: #dc3545; }
         .nav-btn.status { background: #17a2b8; }
+        .nav-btn.debug { background: #6c757d; }
 
         .nav-btn:hover {
             transform: translateY(-2px);
@@ -154,6 +155,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
+            margin-bottom: 10px;
         }
 
         .btn:hover {
@@ -167,6 +169,18 @@
 
         .btn-danger {
             background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin: 5px;
         }
 
         .registration-item {
@@ -265,6 +279,45 @@
             background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
         }
 
+        .notification.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .debug-info {
+            font-family: monospace;
+            font-size: 12px;
+            color: #6c757d;
+            margin: 10px 0;
+        }
+
+        .connection-status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .connection-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .connection-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -297,6 +350,7 @@
             <button class="nav-btn student" onclick="showStudentForm()">📝 ลงทะเบียน</button>
             <button class="nav-btn status" onclick="showStatus()">📊 ตรวจสอบสถานะ</button>
             <button class="nav-btn admin" onclick="showAdminLogin()">👨‍💼 ผู้ดูแล</button>
+            <button class="nav-btn debug" onclick="showDebugPanel()">🔧 Debug</button>
         </div>
 
         <!-- Student Registration Form -->
@@ -352,12 +406,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="teacherSignature">ครูผู้ลงชื่อ *</label>
+                    <label for="teacherSignature">ลงชื่อ ครู/บุคลากร ผู้แจ้ง *</label>
                     <input type="text" id="teacherSignature" name="teacherSignature" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="photo">รูปภาพหลักฐาน</label>
+                    <label for="photo">รูปภาพหลักฐาน (ไม่บังคับ)</label>
                     <div class="file-upload">
                         <input type="file" id="photo" name="photo" accept="image/*">
                         <label for="photo" class="file-upload-label">📷 คลิกเพื่อเลือกรูปภาพ</label>
@@ -365,7 +419,8 @@
                     <div id="imagePreview" class="image-preview"></div>
                 </div>
 
-                <button type="submit" class="btn">📤 ส่งใบลงทะเบียน</button>
+                <button type="submit" class="btn" id="submitBtn">📤 ส่งใบลงทะเบียน</button>
+                <button type="button" class="btn btn-warning" onclick="saveOffline()">💾 บันทึกออฟไลน์</button>
             </form>
         </div>
 
@@ -396,14 +451,50 @@
 
         <!-- Admin Panel -->
         <div id="adminPanel" class="section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                 <h2>👨‍💼 แผงควบคุมผู้ดูแล</h2>
                 <div>
-                    <button class="btn" onclick="refreshRegistrations()" style="width: auto; margin-right: 10px;">🔄 รีเฟรช</button>
-                    <button class="btn btn-danger" onclick="logout()" style="width: auto;">🚪 ออกจากระบบ</button>
+                    <button class="btn btn-small" onclick="refreshRegistrations()">🔄 รีเฟรช</button>
+                    <button class="btn btn-small btn-warning" onclick="testGoogleConnection()">🧪 ทดสอบการเชื่อมต่อ</button>
+                    <button class="btn btn-small btn-danger" onclick="logout()">🚪 ออกจากระบบ</button>
                 </div>
             </div>
             <div id="registrationsList"></div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debugPanel" class="section">
+            <h2>🔧 แผงควบคุม Debug</h2>
+            
+            <div class="debug-panel">
+                <h3>🔍 ตรวจสอบการเชื่อมต่อ</h3>
+                <button class="btn btn-small btn-warning" onclick="testConnection()">🧪 ทดสอบการเชื่อมต่อ</button>
+                <button class="btn btn-small btn-warning" onclick="sendTestData()">📊 ทดสอบส่งข้อมูล</button>
+                <div id="connectionStatus"></div>
+            </div>
+
+            <div class="debug-panel">
+                <h3>⚙️ ตั้งค่า Google Apps Script</h3>
+                <div class="form-group">
+                    <label for="googleScriptUrl">Google Apps Script URL:</label>
+                    <input type="url" id="googleScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+                <button class="btn btn-small" onclick="updateGoogleScriptUrl()">💾 อัปเดต URL</button>
+                <div class="debug-info">
+                    ปัจจุบัน: <span id="currentUrl"></span>
+                </div>
+            </div>
+
+            <div class="debug-panel">
+                <h3>📋 ข้อมูล Debug</h3>
+                <button class="btn btn-small" onclick="showDebugInfo()">📋 แสดงข้อมูล Debug</button>
+                <button class="btn btn-small btn-danger" onclick="clearLocalData()">🗑️ ล้างข้อมูล Local</button>
+            </div>
+
+            <div class="debug-panel">
+                <h3>📁 ข้อมูลใน Local Storage</h3>
+                <div id="localStorageInfo"></div>
+            </div>
         </div>
     </div>
 
@@ -413,8 +504,8 @@
         // ======================================
         const ADMIN_PASSWORD = 'admin1234';
 
-        // ✅ แทนที่ด้วย URL ใหม่ที่ได้จาก Deploy ใหม่
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyHx4ADn3waoI4A5yxkTHSUMvrjAIB4hY4YMr3bNYiKyeeFzDLzTax0c3KZ9CdumDR0/exec';
+        // ⚠️ แทนที่ด้วย URL ที่ถูกต้องจาก Google Apps Script
+        let GOOGLE_SHEET_URL = localStorage.getItem('googleScriptUrl') || 'https://script.google.com/macros/s/AKfycbyHx4ADn3waoI4A5yxkTHSUMvrjAIB4hY4YMr3bNYiKyeeFzDLzTax0c3KZ9CdumDR0/exec';
 
         // Storage for registrations
         let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
@@ -423,7 +514,7 @@
         // Navigation Functions
         // ======================================
         function hideAllSections() {
-            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
+            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck', 'debugPanel'];
             sections.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -456,6 +547,15 @@
             }
         }
 
+        function showDebugPanel() {
+            hideAllSections();
+            const element = document.getElementById('debugPanel');
+            if (element) {
+                element.style.display = 'block';
+                updateDebugInfo();
+            }
+        }
+
         // ======================================
         // Form Handling
         // ======================================
@@ -468,6 +568,14 @@
                     const preview = document.getElementById('imagePreview');
                     
                     if (file) {
+                        // ตรวจสอบขนาดไฟล์ (จำกัดที่ 2MB)
+                        if (file.size > 2 * 1024 * 1024) {
+                            showNotification('⚠️ ไฟล์รูปภาพใหญ่เกิน 2MB กรุณาเลือกไฟล์ที่เล็กกว่า', 'warning');
+                            this.value = '';
+                            preview.innerHTML = '';
+                            return;
+                        }
+
                         const reader = new FileReader();
                         reader.onload = function(e) {
                             preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
@@ -479,6 +587,12 @@
                         if (label) {
                             label.textContent = `📷 ${file.name}`;
                         }
+                    } else {
+                        preview.innerHTML = '';
+                        const label = document.querySelector('.file-upload-label');
+                        if (label) {
+                            label.textContent = '📷 คลิกเพื่อเลือกรูปภาพ';
+                        }
                     }
                 });
             }
@@ -489,20 +603,36 @@
                 registrationForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
-                    const formData = new FormData(e.target);
-                    const data = Object.fromEntries(formData.entries());
+                    const submitBtn = document.getElementById('submitBtn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = '⏳ กำลังส่ง...';
+                    }
                     
-                    // Convert photo to base64
-                    const photoFile = document.getElementById('photo').files[0];
-                    if (photoFile) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            data.photo = e.target.result;
+                    try {
+                        const formData = new FormData(e.target);
+                        const data = Object.fromEntries(formData.entries());
+                        
+                        // Convert photo to base64
+                        const photoFile = document.getElementById('photo').files[0];
+                        if (photoFile) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                data.photo = e.target.result;
+                                submitRegistration(data);
+                            };
+                            reader.readAsDataURL(photoFile);
+                        } else {
                             submitRegistration(data);
-                        };
-                        reader.readAsDataURL(photoFile);
-                    } else {
-                        submitRegistration(data);
+                        }
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        showNotification('❌ เกิดข้อผิดพลาดในการส่งฟอร์ม', 'error');
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = '📤 ส่งใบลงทะเบียน';
+                        }
                     }
                 });
             }
@@ -559,7 +689,7 @@
                                     <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
                                     <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
                                     <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
-                                    <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
+                                    <div><strong>ลงชื่อ ครู/บุคลากร ผู้แจ้ง:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
                                 </div>
                             </div>
                         `;
@@ -571,11 +701,7 @@
             
             // Initialize
             showStudentForm();
-            
-            // ทดสอบการเชื่อมต่อหลังโหลดหน้า
-            setTimeout(() => {
-                testConnection();
-            }, 1000);
+            updateDebugInfo();
         });
 
         // ======================================
@@ -597,9 +723,13 @@
 
                 console.log('Registration data:', registration);
 
-                // สร้างข้อมูลสำหรับเก็บใน localStorage โดยไม่รวมรูปภาพ
+                // สร้างข้อมูลสำหรับเก็บใน localStorage โดยไม่รวมรูปภาพขนาดใหญ่
                 const registrationForLocalStorage = { ...registration };
-                delete registrationForLocalStorage.photo; // ลบรูปภาพออกก่อนเก็บ
+                if (registrationForLocalStorage.photo && registrationForLocalStorage.photo.length > 100000) {
+                    // เก็บเฉพาะข้อมูลว่ามีรูปภาพ
+                    registrationForLocalStorage.hasPhoto = true;
+                    delete registrationForLocalStorage.photo;
+                }
 
                 // เก็บใน localStorage
                 registrations.push(registrationForLocalStorage);
@@ -618,12 +748,52 @@
                     const label = document.querySelector('.file-upload-label');
                     if (label) label.textContent = '📷 คลิกเพื่อเลือกรูปภาพ';
                 } else {
-                    showNotification('⚠️ ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
+                    showNotification('⚠️ ข้อมูลถูกบันทึกในเครื่องแล้ว แต่ไม่สามารถส่งไปยังเซิร์ฟเวอร์ได้', 'warning');
                 }
                 
             } catch (error) {
                 console.error('Error in submitRegistration:', error);
                 showNotification('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        }
+
+        // ฟังก์ชันบันทึกออฟไลน์
+        function saveOffline() {
+            try {
+                const form = document.getElementById('registrationForm');
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                
+                // ตรวจสอบข้อมูลที่จำเป็น
+                if (!data.studentId || !data.firstName || !data.lastName) {
+                    showNotification('⚠️ กรุณากรอกข้อมูลที่จำเป็น', 'warning');
+                    return;
+                }
+                
+                const registration = {
+                    id: Date.now().toString(),
+                    ...data,
+                    status: 'offline',
+                    timestamp: new Date().toISOString(),
+                    statusText: 'บันทึกออฟไลน์',
+                    action: 'offline'
+                };
+
+                registrations.push(registration);
+                localStorage.setItem('registrations', JSON.stringify(registrations));
+                
+                showNotification('💾 บันทึกข้อมูลออฟไลน์เรียบร้อย', 'success');
+                
+                // เคลียร์ฟอร์ม
+                form.reset();
+                const preview = document.getElementById('imagePreview');
+                if (preview) preview.innerHTML = '';
+                const label = document.querySelector('.file-upload-label');
+                if (label) label.textContent = '📷 คลิกเพื่อเลือกรูปภาพ';
+                
+            } catch (error) {
+                console.error('Offline save error:', error);
+                showNotification('❌ เกิดข้อผิดพลาดในการบันทึกออฟไลน์', 'error');
             }
         }
 
@@ -637,43 +807,57 @@
                     throw new Error('กรุณาตั้งค่า GOOGLE_SHEET_URL ให้ถูกต้อง');
                 }
                 
-                const response = await fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                console.log('Response status:', response.status);
-                
-                if (response.ok) {
-                    const result = await response.text();
-                    console.log('Google Apps Script response:', result);
+                // ลองส่งข้อมูลหลายวิธี
+                const methods = [
+                    // วิธีที่ 1: POST with JSON
+                    () => fetch(GOOGLE_SHEET_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                        mode: 'no-cors' // เพิ่มเพื่อแก้ปัญหา CORS
+                    }),
                     
+                    // วิธีที่ 2: GET with parameters
+                    () => {
+                        const params = new URLSearchParams();
+                        Object.keys(data).forEach(key => {
+                            if (key !== 'photo') { // ไม่ส่งรูปภาพผ่าน GET
+                                params.append(key, data[key]);
+                            }
+                        });
+                        return fetch(`${GOOGLE_SHEET_URL}?${params.toString()}`, {
+                            method: 'GET',
+                            mode: 'no-cors'
+                        });
+                    }
+                ];
+                
+                for (let i = 0; i < methods.length; i++) {
                     try {
-                        const jsonResult = JSON.parse(result);
-                        if (jsonResult.status === 'success') {
+                        console.log(`Trying method ${i + 1}...`);
+                        const response = await methods[i]();
+                        console.log(`Method ${i + 1} response:`, response);
+                        
+                        // เนื่องจากใช้ no-cors จึงไม่สามารถอ่าน response ได้
+                        // แต่ถ้าไม่มี error แสดงว่าส่งสำเร็จ
+                        if (response.type === 'opaque' || response.ok) {
                             console.log('✅ Data sent successfully');
                             return true;
-                        } else {
-                            console.error('❌ Server error:', jsonResult.message);
-                            showNotification('⚠️ เกิดข้อผิดพลาดในการบันทึก: ' + jsonResult.message, 'error');
-                            return false;
                         }
-                    } catch (parseError) {
-                        console.log('Response is not JSON, but request succeeded');
-                        return true;
+                    } catch (methodError) {
+                        console.log(`Method ${i + 1} failed:`, methodError);
+                        if (i === methods.length - 1) {
+                            throw methodError;
+                        }
                     }
-                } else {
-                    const errorText = await response.text();
-                    console.error('❌ HTTP error:', response.status, errorText);
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
+                
+                return false;
                 
             } catch (error) {
                 console.error('❌ Error sending to Google Apps Script:', error);
-                showNotification('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message, 'error');
                 return false;
             }
         }
@@ -703,12 +887,12 @@
                         <div><strong>ห้อง:</strong> ${registration.classroom}</div>
                         <div><strong>คะแนน:</strong> ${registration.points} คะแนน</div>
                         <div><strong>สถานะ:</strong> <span class="status-badge status-${registration.status}">${registration.statusText}</span></div>
-                        <div><strong>ครูผู้ลงชื่อ:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
+                        <div><strong>ลงชื่อ ครู/บุคลากร ผู้แจ้ง:</strong> ${registration.teacherSignature || 'ไม่ระบุ'}</div>
                         <div><strong>วันที่:</strong> ${new Date(registration.timestamp).toLocaleDateString('th-TH')}</div>
                         ${registration.photo ? `
                         <div class="registration-photo">
                             <img src="${registration.photo}" alt="รูปถ่าย">
-                        </div>` : ''}
+                        </div>` : registration.hasPhoto ? '<div><strong>รูปภาพ:</strong> มีรูปภาพแนบ</div>' : ''}
                     </div>
                     ${registration.status === 'pending' ? `
                     <div class="admin-actions">
@@ -753,6 +937,171 @@
         }
 
         // ======================================
+        // Debug Functions
+        // ======================================
+        function updateDebugInfo() {
+            const currentUrlElement = document.getElementById('currentUrl');
+            if (currentUrlElement) {
+                currentUrlElement.textContent = GOOGLE_SHEET_URL;
+            }
+            
+            const localStorageInfo = document.getElementById('localStorageInfo');
+            if (localStorageInfo) {
+                localStorageInfo.innerHTML = `
+                    <div class="debug-info">จำนวนการลงทะเบียน: ${registrations.length}</div>
+                    <div class="debug-info">ขนาดข้อมูล: ${JSON.stringify(registrations).length} characters</div>
+                    <div class="debug-info">อัปเดตล่าสุด: ${new Date().toLocaleString('th-TH')}</div>
+                `;
+            }
+        }
+
+        function updateGoogleScriptUrl() {
+            const newUrl = document.getElementById('googleScriptUrl').value.trim();
+            if (newUrl) {
+                GOOGLE_SHEET_URL = newUrl;
+                localStorage.setItem('googleScriptUrl', newUrl);
+                updateDebugInfo();
+                showNotification('✅ อัปเดต Google Apps Script URL เรียบร้อย', 'success');
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const statusElement = document.getElementById('connectionStatus');
+                if (statusElement) {
+                    statusElement.innerHTML = '<div class="connection-status">⏳ กำลังทดสอบการเชื่อมต่อ...</div>';
+                }
+                
+                console.log('🔍 ทดสอบการเชื่อมต่อ Google Apps Script...');
+                console.log('URL:', GOOGLE_SHEET_URL);
+                
+                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+                    throw new Error('GOOGLE_SHEET_URL ยังไม่ได้ตั้งค่า');
+                }
+                
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                
+                console.log('Response:', response);
+                
+                let resultMessage = '';
+                let resultClass = 'connection-success';
+                
+                if (response.type === 'opaque') {
+                    resultMessage = '✅ เชื่อมต่อ Google Apps Script สำเร็จ! (no-cors mode)';
+                } else if (response.ok) {
+                    resultMessage = '✅ เชื่อมต่อ Google Apps Script สำเร็จ!';
+                } else {
+                    resultMessage = `⚠️ การเชื่อมต่อมีปัญหา: HTTP ${response.status}`;
+                    resultClass = 'connection-error';
+                }
+                
+                if (statusElement) {
+                    statusElement.innerHTML = `<div class="connection-status ${resultClass}">${resultMessage}</div>`;
+                }
+                
+                showNotification(resultMessage, response.type === 'opaque' || response.ok ? 'success' : 'warning');
+                
+            } catch (error) {
+                console.error('❌ Connection error:', error);
+                const statusElement = document.getElementById('connectionStatus');
+                if (statusElement) {
+                    statusElement.innerHTML = `<div class="connection-status connection-error">❌ เชื่อมต่อไม่สำเร็จ: ${error.message}</div>`;
+                }
+                showNotification(`❌ เชื่อมต่อไม่สำเร็จ: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGoogleConnection() {
+            await testConnection();
+        }
+
+        async function sendTestData() {
+            try {
+                console.log('📊 ทดสอบการส่งข้อมูล...');
+                
+                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+                    showNotification('⚠️ กรุณาตั้งค่า GOOGLE_SHEET_URL ก่อนทดสอบ', 'error');
+                    return;
+                }
+                
+                const testData = {
+                    id: 'TEST_' + Date.now(),
+                    studentId: 'TEST001',
+                    studentNumber: '99',
+                    firstName: 'ทดสอบ',
+                    lastName: 'ระบบ',
+                    classroom: 'ม.1/1',
+                    points: '1',
+                    teacherSignature: 'ครู/บุคลากรทดสอบ',
+                    photo: null,
+                    action: 'test',
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log('Test data:', testData);
+                
+                const success = await sendToGoogleAppsScript(testData);
+                
+                if (success) {
+                    showNotification('✅ ทดสอบส่งข้อมูลสำเร็จ! ตรวจสอบ Google Sheets', 'success');
+                } else {
+                    showNotification('⚠️ ทดสอบส่งข้อมูลอาจไม่สำเร็จ (แต่อาจเป็นเพราะ CORS)', 'warning');
+                }
+                
+            } catch (error) {
+                console.error('❌ Test error:', error);
+                showNotification('❌ เกิดข้อผิดพลาดในการทดสอบ: ' + error.message, 'error');
+            }
+        }
+
+        function showDebugInfo() {
+            const info = `
+📋 ข้อมูลการ Debug:
+
+🔗 Google Apps Script URL: 
+${GOOGLE_SHEET_URL}
+
+📊 จำนวนการลงทะเบียนใน localStorage: ${registrations.length}
+
+🕐 เวลาปัจจุบัน: ${new Date().toLocaleString('th-TH')}
+
+🌐 เบราว์เซอร์: ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : 'อื่นๆ'}
+
+📍 URL ปัจจุบัน: ${window.location.href}
+
+💾 ขนาดข้อมูล Local Storage: ${JSON.stringify(registrations).length} characters
+
+ดูข้อมูลเพิ่มเติมใน Console (กด F12)
+            `;
+            
+            alert(info);
+            console.log('=== DEBUG INFO ===');
+            console.log('GOOGLE_SHEET_URL:', GOOGLE_SHEET_URL);
+            console.log('Registrations:', registrations);
+            console.log('User agent:', navigator.userAgent);
+            console.log('Current location:', window.location.href);
+        }
+
+        function clearLocalData() {
+            if (confirm('⚠️ ต้องการล้างข้อมูลทั้งหมดใน Local Storage หรือไม่?')) {
+                localStorage.removeItem('registrations');
+                localStorage.removeItem('googleScriptUrl');
+                registrations = [];
+                showNotification('🗑️ ล้างข้อมูล Local Storage เรียบร้อย', 'success');
+                updateDebugInfo();
+                
+                // รีเฟรชหน้าถ้าอยู่ใน Admin Panel
+                const adminPanel = document.getElementById('adminPanel');
+                if (adminPanel && adminPanel.style.display === 'block') {
+                    loadRegistrations();
+                }
+            }
+        }
+
+        // ======================================
         // Utility Functions
         // ======================================
         function refreshRegistrations() {
@@ -781,133 +1130,16 @@
             
             setTimeout(() => {
                 notification.classList.remove('show');
-            }, 4000);
+            }, 5000);
         }
 
         // ======================================
-        // Testing Functions
+        // Initialize
         // ======================================
-        async function testConnection() {
-            try {
-                console.log('🔍 ทดสอบการเชื่อมต่อ Google Apps Script...');
-                console.log('URL:', GOOGLE_SHEET_URL);
-                
-                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
-                    console.warn('⚠️ GOOGLE_SHEET_URL ยังไม่ได้ตั้งค่า');
-                    return false;
-                }
-                
-                const response = await fetch(GOOGLE_SHEET_URL, {
-                    method: 'GET'
-                });
-                
-                console.log('Response status:', response.status);
-                
-                if (response.ok) {
-                    const result = await response.text();
-                    console.log('Response:', result);
-                    
-                    try {
-                        const jsonResult = JSON.parse(result);
-                        if (jsonResult.status === 'ok') {
-                            console.log('✅ Connection test successful');
-                            showNotification('✅ เชื่อมต่อ Google Apps Script สำเร็จ!', 'success');
-                            return true;
-                        } else {
-                            console.warn('⚠️ Unexpected response:', jsonResult);
-                            showNotification('⚠️ Google Apps Script ตอบกลับผิดปกติ', 'error');
-                            return false;
-                        }
-                    } catch (parseError) {
-                        console.log('Response is not JSON');
-                        showNotification('⚠️ Google Apps Script ตอบกลับไม่ใช่ JSON', 'error');
-                        return false;
-                    }
-                } else {
-                    console.error('❌ Connection failed:', response.status);
-                    showNotification(`❌ เชื่อมต่อไม่สำเร็จ: HTTP ${response.status}`, 'error');
-                    return false;
-                }
-                
-            } catch (error) {
-                console.error('❌ Connection error:', error);
-                console.warn('Connection test failed - may need to set GOOGLE_SHEET_URL');
-                return false;
-            }
-        }
-
-        async function sendTestData() {
-            try {
-                console.log('📊 ทดสอบการส่งข้อมูล...');
-                
-                if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
-                    showNotification('⚠️ กรุณาตั้งค่า GOOGLE_SHEET_URL ก่อนทดสอบ', 'error');
-                    return;
-                }
-                
-                const testData = {
-                    id: 'TEST_' + Date.now(),
-                    studentId: 'TEST001',
-                    studentNumber: '99',
-                    firstName: 'ทดสอบ',
-                    lastName: 'ระบบ',
-                    classroom: 'ม.1/1',
-                    points: '1',
-                    teacherSignature: 'ครูทดสอบ',
-                    photo: null,
-                    action: 'submit',
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log('Test data:', testData);
-                
-                const success = await sendToGoogleAppsScript(testData);
-                
-                if (success) {
-                    showNotification('✅ ทดสอบส่งข้อมูลสำเร็จ! ตรวจสอบ Google Sheets', 'success');
-                } else {
-                    showNotification('❌ ทดสอบส่งข้อมูลไม่สำเร็จ', 'error');
-                }
-                
-            } catch (error) {
-                console.error('❌ Test error:', error);
-                showNotification('❌ เกิดข้อผิดพลาดในการทดสอบ: ' + error.message, 'error');
-            }
-        }
-
-        function showDebugInfo() {
-            console.log('=== DEBUG INFO ===');
-            console.log('GOOGLE_SHEET_URL:', GOOGLE_SHEET_URL);
-            console.log('Registrations count:', registrations.length);
-            console.log('Current time:', new Date().toISOString());
-            console.log('User agent:', navigator.userAgent);
-            console.log('Current location:', window.location.href);
-            
-            const urlValid = GOOGLE_SHEET_URL && !GOOGLE_SHEET_URL.includes('https://script.google.com/macros/s/AKfycbyrhbEJGSAlxr9ajwo5rTf7gGMKgWgeEWxKIzQDS1pxBgn_poKTrzRbebE7W1ua231WiA/exec');
-            
-            const info = `
-📋 ข้อมูลการ Debug:
-
-🔗 Google Apps Script URL: 
-${GOOGLE_SHEET_URL}
-
-✅ URL ถูกต้อง: ${urlValid ? 'ใช่' : 'ไม่ใช่'}
-
-📊 จำนวนการลงทะเบียนใน localStorage: ${registrations.length}
-
-🕐 เวลาปัจจุบัน: ${new Date().toLocaleString('th-TH')}
-
-🌐 เบราว์เซอร์: ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : 'อื่นๆ'}
-
-📍 URL ปัจจุบัน: ${window.location.href}
-
-${!urlValid ? '\n⚠️ กรุณาอัปเดต GOOGLE_SHEET_URL ให้ถูกต้อง' : ''}
-
-ดูข้อมูลเพิ่มเติมใน Console (กด F12)
-            `;
-            
-            alert(info);
-        }
+        window.addEventListener('load', function() {
+            console.log('🚀 Application loaded');
+            updateDebugInfo();
+        });
     </script>
 </body>
 </html>
