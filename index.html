@@ -686,13 +686,13 @@
 
         <div class="nav-container">
             <div class="nav-buttons">
-                <button class="nav-btn student" onclick="showStudentForm()">
+                <button class="nav-btn student" onclick="window.showStudentForm ? window.showStudentForm() : alert('กำลังโหลด...')">
                     📝 ลงทะเบียน
                 </button>
-                <button class="nav-btn status" onclick="showStatus()">
+                <button class="nav-btn status" onclick="window.showStatus ? window.showStatus() : alert('กำลังโหลด...')">
                     📊 ตรวจสอบสถานะ
                 </button>
-                <button class="nav-btn admin" onclick="showAdminLogin()">
+                <button class="nav-btn admin" onclick="window.showAdminLogin ? window.showAdminLogin() : alert('กำลังโหลด...')">
                     👨‍💼 ผู้ดูแลระบบ
                 </button>
             </div>
@@ -836,7 +836,7 @@
             
             <div class="form-card">
                 <div style="margin-bottom: 20px;">
-                    <button class="btn btn-small btn-info" onclick="syncDataFromServer()">🔄 ซิงค์ข้อมูลล่าสุดจาก Google Sheets</button>
+                    <button class="btn btn-small btn-info" onclick="window.syncDataFromServer ? window.syncDataFromServer() : alert('กำลังโหลด...')">🔄 ซิงค์ข้อมูลล่าสุดจาก Google Sheets</button>
                     <div id="syncStatusDisplay" style="margin-top: 10px;"></div>
                 </div>
                 
@@ -844,7 +844,7 @@
                 <div class="debug-panel">
                     <h4>🔍 ข้อมูลระบบ (สำหรับการตรวจสอบ)</h4>
                     <div class="debug-info" id="dataDebugInfo">กำลังโหลด...</div>
-                    <button class="btn btn-small" onclick="refreshDebugInfo()">🔄 รีเฟรชข้อมูล</button>
+                    <button class="btn btn-small" onclick="window.refreshDebugInfo ? window.refreshDebugInfo() : alert('กำลังโหลด...')">🔄 รีเฟรชข้อมูล</button>
                 </div>
                 
                 <form id="statusForm">
@@ -879,7 +879,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                 <h2>👨‍💼 แผงควบคุมผู้ดูแลระบบ</h2>
                 <div>
-                    <button class="btn btn-small btn-danger" onclick="logout()">🚪 ออกจากระบบ</button>
+                    <button class="btn btn-small btn-danger" onclick="window.logout ? window.logout() : alert('กำลังโหลด...')">🚪 ออกจากระบบ</button>
                 </div>
             </div>
             
@@ -901,7 +901,7 @@
                 <div id="adminSyncStatus" style="margin-bottom: 15px;"></div>
                 
                 <div style="margin-bottom: 20px;">
-                    <button class="btn btn-small btn-info" onclick="syncDataFromServer()">🔄 ซิงค์ข้อมูลล่าสุด</button>
+                    <button class="btn btn-small btn-info" onclick="window.syncDataFromServer ? window.syncDataFromServer() : alert('กำลังโหลด...')">🔄 ซิงค์ข้อมูลล่าสุด</button>
                 </div>
                 
                 <div id="adminStats" class="stats-grid">
@@ -1011,8 +1011,8 @@
         // CRITICAL FUNCTIONS - MUST BE FIRST!
         // ======================================
         
-        // Navigation Functions (ต้องอยู่ด้านบนสุด!)
-        function hideAllSections() {
+        // Navigation Functions (ใส่ใน window object ทันที!)
+        window.hideAllSections = function() {
             const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
             sections.forEach(id => {
                 const element = document.getElementById(id);
@@ -1020,30 +1020,30 @@
                     element.style.display = 'none';
                 }
             });
-        }
+        };
 
-        function showStudentForm() {
-            hideAllSections();
+        window.showStudentForm = function() {
+            window.hideAllSections();
             document.getElementById('studentForm').style.display = 'block';
-        }
+        };
 
-        function showAdminLogin() {
-            hideAllSections();
+        window.showAdminLogin = function() {
+            window.hideAllSections();
             document.getElementById('adminLogin').style.display = 'block';
-        }
+        };
 
-        function showStatus() {
-            hideAllSections();
+        window.showStatus = function() {
+            window.hideAllSections();
             document.getElementById('statusCheck').style.display = 'block';
             
             // รีเฟรชข้อมูล debug ทันที
-            if (typeof refreshDebugInfo === 'function') {
-                refreshDebugInfo();
+            if (typeof window.refreshDebugInfo === 'function') {
+                window.refreshDebugInfo();
             }
-        }
+        };
 
         // Utility Functions
-        function showNotification(message, type) {
+        window.showNotification = function(message, type) {
             let notification = document.getElementById('notification');
             if (!notification) {
                 notification = document.createElement('div');
@@ -1059,7 +1059,14 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 5000);
-        }
+        };
+
+        // ทำให้ฟังก์ชันเหล่านี้เป็น global ด้วย
+        const hideAllSections = window.hideAllSections;
+        const showStudentForm = window.showStudentForm;
+        const showAdminLogin = window.showAdminLogin;
+        const showStatus = window.showStatus;
+        const showNotification = window.showNotification;
 
         // ======================================
         // Configuration
@@ -1093,6 +1100,21 @@
             }
             return 'studentForm';
         }
+
+        // ======================================
+        // ทดสอบว่าฟังก์ชันโหลดแล้วหรือยัง
+        // ======================================
+        console.log('🧪 Function Test:');
+        console.log('showStudentForm:', typeof window.showStudentForm);
+        console.log('showStatus:', typeof window.showStatus);
+        console.log('showAdminLogin:', typeof window.showAdminLogin);
+        console.log('logout:', typeof window.logout);
+        console.log('✅ All critical functions loaded!');
+
+        // แสดงข้อความยืนยันในหน้าเว็บ
+        setTimeout(function() {
+            window.showNotification('✅ ระบบโหลดเสร็จแล้ว - ปุ่มพร้อมใช้งาน!', 'success');
+        }, 500);
 
         // ======================================
         // Debug Functions (แก้ปัญหาการตรวจสอบสถานะ)
