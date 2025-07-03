@@ -1008,6 +1008,60 @@
 
     <script>
         // ======================================
+        // CRITICAL FUNCTIONS - MUST BE FIRST!
+        // ======================================
+        
+        // Navigation Functions (ต้องอยู่ด้านบนสุด!)
+        function hideAllSections() {
+            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+        }
+
+        function showStudentForm() {
+            hideAllSections();
+            document.getElementById('studentForm').style.display = 'block';
+        }
+
+        function showAdminLogin() {
+            hideAllSections();
+            document.getElementById('adminLogin').style.display = 'block';
+        }
+
+        function showStatus() {
+            hideAllSections();
+            document.getElementById('statusCheck').style.display = 'block';
+            
+            // รีเฟรชข้อมูล debug ทันที
+            if (typeof refreshDebugInfo === 'function') {
+                refreshDebugInfo();
+            }
+        }
+
+        // Utility Functions
+        function showNotification(message, type) {
+            let notification = document.getElementById('notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.className = 'notification';
+                document.body.appendChild(notification);
+            }
+            
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // ======================================
         // Configuration
         // ======================================
         const ADMIN_PASSWORD = 'admin1234';
@@ -1027,6 +1081,17 @@
         // บันทึก URL เริ่มต้นลง localStorage หากยังไม่มี
         if (!localStorage.getItem('googleScriptUrl')) {
             localStorage.setItem('googleScriptUrl', DEFAULT_GOOGLE_SHEET_URL);
+        }
+
+        function getCurrentSection() {
+            const sections = ['studentForm', 'adminPanel', 'statusCheck'];
+            for (const section of sections) {
+                const element = document.getElementById(section);
+                if (element && element.style.display === 'block') {
+                    return section;
+                }
+            }
+            return 'studentForm';
         }
 
         // ======================================
@@ -1503,49 +1568,97 @@ ${info.browserInfo}
         }
 
         // ======================================
-        // Navigation Functions
+        // Admin Tab Functions 
         // ======================================
-        function hideAllSections() {
-            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
-            sections.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.style.display = 'none';
+        function showAdminTab(tabName) {
+            try {
+                // ซ่อนแท็บทั้งหมด
+                const tabs = ['adminDashboard', 'adminRegistrations', 'adminSettings'];
+                tabs.forEach(tab => {
+                    const element = document.getElementById(tab);
+                    if (element) {
+                        element.classList.remove('active');
+                    }
+                });
+
+                // ลบ active class จากปุ่มทั้งหมด
+                const tabButtons = document.querySelectorAll('.admin-tab');
+                if (tabButtons) {
+                    tabButtons.forEach(button => {
+                        if (button) {
+                            button.classList.remove('active');
+                        }
+                    });
                 }
-            });
-        }
 
-        function showStudentForm() {
-            hideAllSections();
-            document.getElementById('studentForm').style.display = 'block';
-        }
-
-        function showAdminLogin() {
-            hideAllSections();
-            document.getElementById('adminLogin').style.display = 'block';
-        }
-
-        function showStatus() {
-            hideAllSections();
-            document.getElementById('statusCheck').style.display = 'block';
-            
-            // รีเฟรชข้อมูล debug ทันที
-            refreshDebugInfo();
-            
-            // ซิงค์ข้อมูลอัตโนมัติเมื่อเปิดหน้า (ถ้าไม่ใช่ auto sync)
-            if (GOOGLE_SHEET_URL && !AUTO_SYNC_ENABLED) {
-                syncDataFromServer();
-            } else if (!GOOGLE_SHEET_URL) {
-                const statusElement = document.getElementById('syncStatusDisplay');
-                if (statusElement) {
-                    statusElement.innerHTML = '<div class="status-indicator status-error">⚠️ กรุณาให้ผู้ดูแลตั้งค่า Google Apps Script URL ก่อน</div>';
+                // แสดงแท็บที่เลือก
+                const selectedTab = document.getElementById(`admin${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+                if (selectedTab) {
+                    selectedTab.classList.add('active');
                 }
+
+                // เพิ่ม active class ให้ปุ่มที่ถูกเลือก
+                const tabButtons2 = document.querySelectorAll('.admin-tab');
+                if (tabButtons2) {
+                    tabButtons2.forEach((button, index) => {
+                        if (button) {
+                            const buttonText = button.textContent || button.innerText || '';
+                            if (
+                                (tabName === 'dashboard' && buttonText.includes('แดชบอร์ด')) ||
+                                (tabName === 'registrations' && buttonText.includes('จัดการรายการ')) ||
+                                (tabName === 'settings' && buttonText.includes('ตั้งค่าระบบ'))
+                            ) {
+                                button.classList.add('active');
+                            }
+                        }
+                    });
+                }
+
+                // ทำงานเฉพาะตามแท็บ
+                switch(tabName) {
+                    case 'dashboard':
+                        setTimeout(() => updateAdminStats(), 100);
+                        break;
+                    case 'registrations':
+                        setTimeout(() => loadRegistrations(), 100);
+                        break;
+                    case 'settings':
+                        setTimeout(() => updateCurrentUrlDisplay(), 100);
+                        break;
+                }
+            } catch (error) {
+                console.error('Error in showAdminTab:', error);
+                showNotification('⚠️ เกิดข้อผิดพลาดในการเปลี่ยนแท็บ', 'warning');
             }
         }
 
-        // ======================================
-        // Admin Tab Functions 
-        // ======================================
+        function filterRegistrations(filter) {
+            try {
+                const allItems = document.querySelectorAll('.registration-item');
+                
+                if (allItems) {
+                    allItems.forEach(item => {
+                        if (item) {
+                            const statusBadge = item.querySelector('.status-badge');
+                            if (!statusBadge) return;
+                            
+                            const status = statusBadge.classList.contains('status-pending') ? 'pending' :
+                                          statusBadge.classList.contains('status-approved') ? 'approved' :
+                                          statusBadge.classList.contains('status-rejected') ? 'rejected' : 'unknown';
+                            
+                            if (filter === 'all' || status === filter) {
+                                item.style.display = 'block';
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error in filterRegistrations:', error);
+                showNotification('⚠️ เกิดข้อผิดพลาดในการกรองข้อมูล', 'warning');
+            }
+        }
         function showAdminTab(tabName) {
             try {
                 // ซ่อนแท็บทั้งหมด
