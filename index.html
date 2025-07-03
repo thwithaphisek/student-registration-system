@@ -696,6 +696,14 @@
                     👨‍💼 ผู้ดูแลระบบ
                 </button>
             </div>
+            
+            <!-- ปุ่มทดสอบเพิ่มเติม -->
+            <div style="margin-top: 15px; text-align: center;">
+                <small style="color: #666;">ทดสอบปุ่ม (หากปุ่มด้านบนไม่ทำงาน):</small><br>
+                <button onclick="testShowStatus()" style="margin: 5px; padding: 8px 12px; background: #17a2b8; color: white; border: none; border-radius: 8px; cursor: pointer;">Test Status</button>
+                <button onclick="testShowAdmin()" style="margin: 5px; padding: 8px 12px; background: #e91e63; color: white; border: none; border-radius: 8px; cursor: pointer;">Test Admin</button>
+                <button onclick="testShowStudent()" style="margin: 5px; padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer;">Test Student</button>
+            </div>
         </div>
 
         <!-- Student Registration Form -->
@@ -1178,6 +1186,28 @@
             };
 
             console.log('✅ All window functions registered!');
+            
+            // เพิ่มฟังก์ชันทดสอบ
+            window.testShowStatus = function() {
+                console.log('🧪 Test: showStatus called directly');
+                window.hideAllSections();
+                document.getElementById('statusCheck').style.display = 'block';
+                window.showNotification('📊 เปิดหน้าตรวจสอบสถานะ (ทดสอบ)', 'info');
+            };
+            
+            window.testShowAdmin = function() {
+                console.log('🧪 Test: showAdminLogin called directly');
+                window.hideAllSections();
+                document.getElementById('adminLogin').style.display = 'block';
+                window.showNotification('👨‍💼 เปิดหน้าผู้ดูแล (ทดสอบ)', 'info');
+            };
+            
+            window.testShowStudent = function() {
+                console.log('🧪 Test: showStudentForm called directly');
+                window.hideAllSections();
+                document.getElementById('studentForm').style.display = 'block';
+                window.showNotification('📝 เปิดหน้าลงทะเบียน (ทดสอบ)', 'info');
+            };
         })();
 
         // ทดสอบทันที
@@ -1202,6 +1232,65 @@
         } else {
             console.error('❌ FAILED: Some functions are not working!');
         }
+
+        // ======================================
+        // MANUAL BUTTON EVENT SETUP (สำรอง)
+        // ======================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Setting up manual button events...');
+            
+            // หาปุ่มทั้งหมดและเพิ่ม event listener
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(function(button) {
+                const buttonText = button.textContent || button.innerHTML;
+                
+                if (buttonText.includes('ตรวจสอบสถานะ')) {
+                    console.log('📊 Setting up status button...');
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('📊 Status button clicked!');
+                        window.showStatus();
+                    });
+                } else if (buttonText.includes('ผู้ดูแลระบบ')) {
+                    console.log('👨‍💼 Setting up admin button...');
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('👨‍💼 Admin button clicked!');
+                        window.showAdminLogin();
+                    });
+                } else if (buttonText.includes('ลงทะเบียน')) {
+                    console.log('📝 Setting up student button...');
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('📝 Student button clicked!');
+                        window.showStudentForm();
+                    });
+                }
+            });
+            
+            console.log('✅ Manual button events setup complete!');
+            
+            // แสดงสถานะของปุ่มในหน้าเว็บ
+            setTimeout(function() {
+                const statusInfo = document.createElement('div');
+                statusInfo.style.cssText = 'position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 8px; font-size: 12px; z-index: 9999;';
+                statusInfo.innerHTML = `
+                    <strong>🔧 Button Status Debug:</strong><br>
+                    showStatus: ${typeof window.showStatus}<br>
+                    showAdminLogin: ${typeof window.showAdminLogin}<br>
+                    showStudentForm: ${typeof window.showStudentForm}<br>
+                    <small>หากเป็น "function" แสดงว่าใช้งานได้</small>
+                `;
+                document.body.appendChild(statusInfo);
+                
+                // ซ่อนหลัง 10 วินาที
+                setTimeout(() => {
+                    if (statusInfo.parentNode) {
+                        statusInfo.parentNode.removeChild(statusInfo);
+                    }
+                }, 10000);
+            }, 3000);
+        });
 
         // ======================================
         // Debug Functions (แก้ปัญหาการตรวจสอบสถานะ)
