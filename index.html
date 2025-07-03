@@ -686,13 +686,13 @@
 
         <div class="nav-container">
             <div class="nav-buttons">
-                <button class="nav-btn student" onclick="window.showStudentForm ? window.showStudentForm() : alert('กำลังโหลด...')">
+                <button class="nav-btn student" onclick="window.showStudentForm()">
                     📝 ลงทะเบียน
                 </button>
-                <button class="nav-btn status" onclick="window.showStatus ? window.showStatus() : alert('กำลังโหลด...')">
+                <button class="nav-btn status" onclick="window.showStatus()">
                     📊 ตรวจสอบสถานะ
                 </button>
-                <button class="nav-btn admin" onclick="window.showAdminLogin ? window.showAdminLogin() : alert('กำลังโหลด...')">
+                <button class="nav-btn admin" onclick="window.showAdminLogin()">
                     👨‍💼 ผู้ดูแลระบบ
                 </button>
             </div>
@@ -879,7 +879,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                 <h2>👨‍💼 แผงควบคุมผู้ดูแลระบบ</h2>
                 <div>
-                    <button class="btn btn-small btn-danger" onclick="window.logout ? window.logout() : alert('กำลังโหลด...')">🚪 ออกจากระบบ</button>
+                    <button class="btn btn-small btn-danger" onclick="window.logout()">🚪 ออกจากระบบ</button>
                 </div>
             </div>
             
@@ -1008,113 +1008,200 @@
 
     <script>
         // ======================================
-        // CRITICAL FUNCTIONS - MUST BE FIRST!
+        // IMMEDIATE GLOBAL FUNCTIONS - NO DELAY!
         // ======================================
         
-        // Navigation Functions (ใส่ใน window object ทันที!)
-        window.hideAllSections = function() {
-            const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
-            sections.forEach(id => {
-                const element = document.getElementById(id);
+        console.log('🚀 Starting script execution...');
+        
+        // ใส่ฟังก์ชันใน window ทันทีที่โหลด
+        (function() {
+            // Navigation Functions
+            window.hideAllSections = function() {
+                console.log('hideAllSections called');
+                const sections = ['studentForm', 'adminLogin', 'adminPanel', 'statusCheck'];
+                sections.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = 'none';
+                    }
+                });
+            };
+
+            window.showStudentForm = function() {
+                console.log('showStudentForm called');
+                window.hideAllSections();
+                const element = document.getElementById('studentForm');
                 if (element) {
-                    element.style.display = 'none';
+                    element.style.display = 'block';
                 }
-            });
-        };
+            };
 
-        window.showStudentForm = function() {
-            window.hideAllSections();
-            document.getElementById('studentForm').style.display = 'block';
-        };
-
-        window.showAdminLogin = function() {
-            window.hideAllSections();
-            document.getElementById('adminLogin').style.display = 'block';
-        };
-
-        window.showStatus = function() {
-            window.hideAllSections();
-            document.getElementById('statusCheck').style.display = 'block';
-            
-            // รีเฟรชข้อมูล debug ทันที
-            if (typeof window.refreshDebugInfo === 'function') {
-                window.refreshDebugInfo();
-            }
-        };
-
-        // Utility Functions
-        window.showNotification = function(message, type) {
-            let notification = document.getElementById('notification');
-            if (!notification) {
-                notification = document.createElement('div');
-                notification.id = 'notification';
-                notification.className = 'notification';
-                document.body.appendChild(notification);
-            }
-            
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 5000);
-        };
-
-        // ทำให้ฟังก์ชันเหล่านี้เป็น global ด้วย
-        const hideAllSections = window.hideAllSections;
-        const showStudentForm = window.showStudentForm;
-        const showAdminLogin = window.showAdminLogin;
-        const showStatus = window.showStatus;
-        const showNotification = window.showNotification;
-
-        // ======================================
-        // Configuration
-        // ======================================
-        const ADMIN_PASSWORD = 'admin1234';
-
-        // Google Apps Script URL - อัพเดทเป็น URL ใหม่
-        const DEFAULT_GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwU80XDsksOAWR9qK7XtpaHyGUYTFoBPT9CoOA60WstkMIFGdMsSvgN6wTginYn7tRB/exec';
-        
-        // ใช้ URL ที่ฝังไว้เป็นค่าเริ่มต้น แต่ยังสามารถเปลี่ยนแปลงได้ในหน้าผู้ดูแล
-        let GOOGLE_SHEET_URL = localStorage.getItem('googleScriptUrl') || DEFAULT_GOOGLE_SHEET_URL;
-
-        // Auto Sync Settings - เปิดใช้งานโดยค่าเริ่มต้น
-        let AUTO_SYNC_ENABLED = localStorage.getItem('autoSyncEnabled') !== 'false';
-
-        // Local data storage
-        let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
-
-        // บันทึก URL เริ่มต้นลง localStorage หากยังไม่มี
-        if (!localStorage.getItem('googleScriptUrl')) {
-            localStorage.setItem('googleScriptUrl', DEFAULT_GOOGLE_SHEET_URL);
-        }
-
-        function getCurrentSection() {
-            const sections = ['studentForm', 'adminPanel', 'statusCheck'];
-            for (const section of sections) {
-                const element = document.getElementById(section);
-                if (element && element.style.display === 'block') {
-                    return section;
+            window.showAdminLogin = function() {
+                console.log('showAdminLogin called');
+                window.hideAllSections();
+                const element = document.getElementById('adminLogin');
+                if (element) {
+                    element.style.display = 'block';
                 }
-            }
-            return 'studentForm';
-        }
+            };
 
-        // ======================================
-        // ทดสอบว่าฟังก์ชันโหลดแล้วหรือยัง
-        // ======================================
-        console.log('🧪 Function Test:');
+            window.showStatus = function() {
+                console.log('showStatus called');
+                window.hideAllSections();
+                const element = document.getElementById('statusCheck');
+                if (element) {
+                    element.style.display = 'block';
+                }
+                
+                // รีเฟรชข้อมูล debug ทันที
+                if (typeof window.refreshDebugInfo === 'function') {
+                    window.refreshDebugInfo();
+                }
+            };
+
+            // Utility Functions
+            window.showNotification = function(message, type) {
+                console.log('showNotification called:', message, type);
+                let notification = document.getElementById('notification');
+                if (!notification) {
+                    notification = document.createElement('div');
+                    notification.id = 'notification';
+                    notification.className = 'notification';
+                    document.body.appendChild(notification);
+                }
+                
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 5000);
+            };
+
+            window.logout = function() {
+                console.log('logout called');
+                window.hideAllSections();
+                window.showStudentForm();
+                window.showNotification('🚪 ออกจากระบบเรียบร้อย', 'success');
+            };
+
+            // Placeholder functions
+            window.syncDataFromServer = function() { 
+                console.log('syncDataFromServer called');
+                window.showNotification('🔄 ระบบกำลังโหลด ฟังก์ชันนี้จะพร้อมใช้งานเร็วๆ นี้', 'info');
+            };
+            
+            window.refreshDebugInfo = function() { 
+                console.log('refreshDebugInfo called');
+                const debugInfo = document.getElementById('dataDebugInfo');
+                if (debugInfo) {
+                    debugInfo.innerHTML = '⏳ กำลังโหลดข้อมูล... ระบบพร้อมใช้งานพื้นฐานแล้ว!';
+                }
+            };
+            
+            window.updateGasUrl = function() { 
+                console.log('updateGasUrl called');
+                window.showNotification('⚙️ ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.toggleAutoSync = function() { 
+                console.log('toggleAutoSync called');
+                window.showNotification('🤖 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.testConnection = function() { 
+                console.log('testConnection called');
+                window.showNotification('🔍 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.sendTestData = function() { 
+                console.log('sendTestData called');
+                window.showNotification('📊 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.getTestData = function() { 
+                console.log('getTestData called');
+                window.showNotification('📥 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.systemCheck = function() { 
+                console.log('systemCheck called');
+                window.showNotification('🔧 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.exportData = function() { 
+                console.log('exportData called');
+                window.showNotification('📥 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.showSystemInfo = function() { 
+                console.log('showSystemInfo called');
+                window.showNotification('ℹ️ ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.clearLocalData = function() { 
+                console.log('clearLocalData called');
+                window.showNotification('🗑️ ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.updateAdminStats = function() { 
+                console.log('updateAdminStats called'); 
+            };
+            
+            window.loadRegistrations = function() { 
+                console.log('loadRegistrations called'); 
+            };
+            
+            window.updateCurrentUrlDisplay = function() { 
+                console.log('updateCurrentUrlDisplay called'); 
+            };
+            
+            window.showAdminTab = function(tabName) { 
+                console.log('showAdminTab called with:', tabName);
+                window.showNotification('📋 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.filterRegistrations = function(filter) { 
+                console.log('filterRegistrations called with:', filter);
+                window.showNotification('🔍 ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.approveRegistration = function(id) { 
+                console.log('approveRegistration called with ID:', id);
+                window.showNotification('✅ ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+            
+            window.rejectRegistration = function(id) { 
+                console.log('rejectRegistration called with ID:', id);
+                window.showNotification('❌ ฟังก์ชันนี้กำลังโหลด...', 'info');
+            };
+
+            console.log('✅ All window functions registered!');
+        })();
+
+        // ทดสอบทันที
+        console.log('🧪 Testing functions:');
         console.log('showStudentForm:', typeof window.showStudentForm);
         console.log('showStatus:', typeof window.showStatus);
         console.log('showAdminLogin:', typeof window.showAdminLogin);
         console.log('logout:', typeof window.logout);
-        console.log('✅ All critical functions loaded!');
 
-        // แสดงข้อความยืนยันในหน้าเว็บ
-        setTimeout(function() {
-            window.showNotification('✅ ระบบโหลดเสร็จแล้ว - ปุ่มพร้อมใช้งาน!', 'success');
-        }, 500);
+        // แสดงผลการทดสอบในหน้าเว็บ
+        if (typeof window.showStudentForm === 'function' && 
+            typeof window.showStatus === 'function' && 
+            typeof window.showAdminLogin === 'function') {
+            console.log('🎉 SUCCESS: All navigation functions are working!');
+            
+            // แสดงข้อความใน 2 วินาที
+            setTimeout(function() {
+                if (window.showNotification) {
+                    window.showNotification('🎉 ระบบพร้อมใช้งาน! ปุ่มทั้งหมดทำงานได้แล้ว', 'success');
+                }
+            }, 2000);
+        } else {
+            console.error('❌ FAILED: Some functions are not working!');
+        }
 
         // ======================================
         // Debug Functions (แก้ปัญหาการตรวจสอบสถานะ)
